@@ -1,0 +1,9 @@
+<archetype>
+  <id>WebScrapper</id>
+  <sources>
+    <source>src/main/java/org/example/PcStoreApplication.java</source>
+  </sources>
+  <testSources>
+    <source>src/test/java/AppTest.java</source>
+  </testSources>
+</archetype>
