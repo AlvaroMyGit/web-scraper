@@ -1,28 +1,37 @@
 package org.example.model;
 
-
 import jakarta.persistence.*;
 
 @Entity
+@Table(name = "compatibility")
 public class Compatibility {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "category1_id", nullable = false)
+    @JoinColumn(name = "category1_id")
     private Category category1;
 
     @ManyToOne
-    @JoinColumn(name = "category2_id", nullable = false)
+    @JoinColumn(name = "category2_id")
     private Category category2;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "compatibility_rule", nullable = false)
     private String compatibilityRule;
 
+    // Default constructor
+    public Compatibility() {}
+
+    // Parameterized constructor
+    public Compatibility(Category category1, Category category2, String compatibilityRule) {
+        this.category1 = category1;
+        this.category2 = category2;
+        this.compatibilityRule = compatibilityRule;
+    }
+
     // Getters and setters
-
-
     public Long getId() {
         return id;
     }

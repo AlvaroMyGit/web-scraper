@@ -2,10 +2,14 @@ package org.example.model;
 
 import jakarta.persistence.*;
 
+
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
+@Table(name = "category")
 public class Category {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -13,11 +17,19 @@ public class Category {
     private String description;
 
     @OneToMany(mappedBy = "category")
-    private Set<Product> products;
+    private Set<ProductRyzenCPU> products;
 
-    // Getters and setters
+    // Default constructor for JPA
+    public Category() {
+    }
 
+    // Parameterized constructor
+    public Category(String name, String description) {
+        this.name = name;
+        this.description = description;
+    }
 
+    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -42,11 +54,29 @@ public class Category {
         this.description = description;
     }
 
-    public Set<Product> getProducts() {
-        return products;
+    // Override equals and hashCode for proper comparison and hashing
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Category category = (Category) o;
+        return Objects.equals(id, category.id) &&
+                Objects.equals(name, category.name) &&
+                Objects.equals(description, category.description);
     }
 
-    public void setProducts(Set<Product> products) {
-        this.products = products;
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, description);
+    }
+
+    // toString method for easy printing
+    @Override
+    public String toString() {
+        return "Category{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                '}';
     }
 }

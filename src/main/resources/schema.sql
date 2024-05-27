@@ -1,4 +1,10 @@
-CREATE TABLE product (
+CREATE TABLE category (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) UNIQUE NOT NULL,
+    description TEXT
+);
+
+CREATE TABLE ryzen_cpu (
     id SERIAL PRIMARY KEY,
     brand VARCHAR(255),
     processors_type VARCHAR(255),
@@ -14,28 +20,63 @@ CREATE TABLE product (
     l2_cache VARCHAR(255),
     l3_cache VARCHAR(255),
     manufacturing_tech VARCHAR(255),
-    is_64_bit_support BOOLEAN,
     memory_types VARCHAR(255),
     memory_channel INTEGER,
-    is_ecc_memory_supported BOOLEAN,
+    ecc_memory_supported VARCHAR(255),
     integrated_graphics VARCHAR(255),
     graphics_base_frequency INTEGER,
-    graphics_max_dynamic_frequency INTEGER,
     pci_express_revision VARCHAR(255),
     thermal_design_power INTEGER,
     cooling_device VARCHAR(255),
     operating_system_supported VARCHAR(255)
 );
 
-CREATE TABLE category (
+CREATE TABLE intel_cpu (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) UNIQUE NOT NULL,
-    description TEXT
+    brand VARCHAR(255),
+    processors_type VARCHAR(255),
+    series VARCHAR(255),
+    name VARCHAR(255),
+    model VARCHAR(255),
+    cpu_socket_type VARCHAR(255),
+    core_name VARCHAR(255),
+    number_of_cores INTEGER,
+    number_of_threads INTEGER,
+    operating_frequency_performance_core_base DOUBLE PRECISION,
+    operating_frequency_efficient_core_base DOUBLE PRECISION,
+    max_turbo_frequency_turbo_boost_max_technology DOUBLE PRECISION,
+    max_turbo_frequency_p_core DOUBLE PRECISION,
+    max_turbo_frequency_e_core DOUBLE PRECISION,
+    l2_cache VARCHAR(255),
+    l3_cache VARCHAR(255),
+    manufacturing_tech VARCHAR(255),
+    support_64_bit VARCHAR(255),
+    hyper_threading_support VARCHAR(255),
+    memory_types VARCHAR(255),
+    memory_channel INTEGER,
+    max_memory_size INTEGER,
+    ecc_memory_supported BOOLEAN,
+    max_memory_bandwidth DOUBLE PRECISION,
+    virtualization_technology_support VARCHAR(255),
+    integrated_graphics VARCHAR(255),
+    graphics_base_frequency INTEGER,
+    graphics_max_dynamic_frequency INTEGER,
+    scalability VARCHAR(255),
+    pci_express_revision VARCHAR(255),
+    pci_express_configurations VARCHAR(255),
+    max_number_of_pci_express_lanes INTEGER,
+    thermal_design_power INTEGER,
+    max_turbo_power INTEGER,
+    cooling_device VARCHAR(255),
+    compatible_desktop_chipsets VARCHAR(255),
+    operating_system_supported VARCHAR(255),
+    advanced_technologies VARCHAR(255),
+    security_and_reliability VARCHAR(255)
 );
 
 CREATE TABLE compatibility (
     id SERIAL PRIMARY KEY,
-    category1_id INT REFERENCES Category(id),
-    category2_id INT REFERENCES Category(id),
+    category1_id INTEGER REFERENCES category(id),
+    category2_id INTEGER REFERENCES category(id),
     compatibility_rule TEXT NOT NULL -- JSON or text describing the compatibility rule
 );
