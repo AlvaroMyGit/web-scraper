@@ -1,9 +1,9 @@
 package org.example.repository;
 
-import org.example.model.ProductRyzenCPU;
+import org.example.model.ProductInterface;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ProductRepository extends JpaRepository<ProductRyzenCPU, Long> {
+public interface ProductRepository extends JpaRepository<ProductInterface, Long> {
 }
