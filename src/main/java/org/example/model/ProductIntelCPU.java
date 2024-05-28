@@ -32,7 +32,7 @@ public class ProductIntelCPU implements Product{
     private String memoryTypes;
     private Integer memoryChannel;
     private Integer maxMemorySize;
-    private Boolean eccMemorySupported;
+    private String eccMemorySupported;
     private Double maxMemoryBandwidth;
     private String virtualizationTechnologySupport;
     private String integratedGraphics;
@@ -41,7 +41,7 @@ public class ProductIntelCPU implements Product{
     private String scalability;
     private String pciExpressRevision;
     private String pciExpressConfigurations;
-    private Integer maxNumberOfPciExpressLanes;
+    private String maxNumberOfPciExpressLanes;
     private Integer thermalDesignPower;
     private Integer maxTurboPower;
     private String coolingDevice;
@@ -50,7 +50,8 @@ public class ProductIntelCPU implements Product{
     private String advancedTechnologies;
     private String securityAndReliability;
 
-    public ProductIntelCPU(String brand, String processorsType, String series, String name, String model, String cpuSocketType, String coreName, Integer numberOfCores, Integer numberOfThreads, Double operatingFrequencyPerformanceCoreBase, Double operatingFrequencyEfficientCoreBase, Double maxTurboFrequencyTurboBoostMaxTechnology, Double maxTurboFrequencyPCore, Double maxTurboFrequencyECore, String l2Cache, String l3Cache, String manufacturingTech, String support64Bit, String hyperThreadingSupport, String memoryTypes, Integer memoryChannel, Integer maxMemorySize, Boolean eccMemorySupported, Double maxMemoryBandwidth, String virtualizationTechnologySupport, String integratedGraphics, Integer graphicsBaseFrequency, Integer graphicsMaxDynamicFrequency, String scalability, String pciExpressRevision, String pciExpressConfigurations, Integer maxNumberOfPciExpressLanes, Integer thermalDesignPower, Integer maxTurboPower, String coolingDevice, String compatibleDesktopChipsets, String operatingSystemSupported, String advancedTechnologies, String securityAndReliability) {
+    public ProductIntelCPU () {};
+    public ProductIntelCPU(String brand, String processorsType, String series, String name, String model, String cpuSocketType, String coreName, Integer numberOfCores, Integer numberOfThreads, Double operatingFrequencyPerformanceCoreBase, Double operatingFrequencyEfficientCoreBase, Double maxTurboFrequencyTurboBoostMaxTechnology, Double maxTurboFrequencyPCore, Double maxTurboFrequencyECore, String l2Cache, String l3Cache, String manufacturingTech, String support64Bit, String hyperThreadingSupport, String memoryTypes, Integer memoryChannel, Integer maxMemorySize, String eccMemorySupported, Double maxMemoryBandwidth, String virtualizationTechnologySupport, String integratedGraphics, Integer graphicsBaseFrequency, Integer graphicsMaxDynamicFrequency, String scalability, String pciExpressRevision, String pciExpressConfigurations, String maxNumberOfPciExpressLanes, Integer thermalDesignPower, Integer maxTurboPower, String coolingDevice, String compatibleDesktopChipsets, String operatingSystemSupported, String advancedTechnologies, String securityAndReliability) {
         this.brand = brand;
         this.processorsType = processorsType;
         this.series = series;
@@ -179,7 +180,7 @@ public class ProductIntelCPU implements Product{
         return operatingFrequencyPerformanceCoreBase;
     }
 
-    public void setOperatingFrequencyPerformanceCoreBase(Double operatingFrequencyPerformanceCoreBase) {
+    public void setOperatingFrequency(Double operatingFrequencyPerformanceCoreBase) {
         this.operatingFrequencyPerformanceCoreBase = operatingFrequencyPerformanceCoreBase;
     }
 
@@ -195,7 +196,7 @@ public class ProductIntelCPU implements Product{
         return maxTurboFrequencyTurboBoostMaxTechnology;
     }
 
-    public void setMaxTurboFrequencyTurboBoostMaxTechnology(Double maxTurboFrequencyTurboBoostMaxTechnology) {
+    public void setMaxTurboFrequency(Double maxTurboFrequencyTurboBoostMaxTechnology) {
         this.maxTurboFrequencyTurboBoostMaxTechnology = maxTurboFrequencyTurboBoostMaxTechnology;
     }
 
@@ -203,7 +204,7 @@ public class ProductIntelCPU implements Product{
         return maxTurboFrequencyPCore;
     }
 
-    public void setMaxTurboFrequencyPCore(Double maxTurboFrequencyPCore) {
+    public void setPCoreFrequency(Double maxTurboFrequencyPCore) {
         this.maxTurboFrequencyPCore = maxTurboFrequencyPCore;
     }
 
@@ -211,7 +212,7 @@ public class ProductIntelCPU implements Product{
         return maxTurboFrequencyECore;
     }
 
-    public void setMaxTurboFrequencyECore(Double maxTurboFrequencyECore) {
+    public void setECoreFrequency(Double maxTurboFrequencyECore) {
         this.maxTurboFrequencyECore = maxTurboFrequencyECore;
     }
 
@@ -279,11 +280,11 @@ public class ProductIntelCPU implements Product{
         this.maxMemorySize = maxMemorySize;
     }
 
-    public Boolean getEccMemorySupported() {
+    public String getEccMemorySupported() {
         return eccMemorySupported;
     }
 
-    public void setEccMemorySupported(Boolean eccMemorySupported) {
+    public void setEccMemorySupported(String eccMemorySupported) {
         this.eccMemorySupported = eccMemorySupported;
     }
 
@@ -351,11 +352,11 @@ public class ProductIntelCPU implements Product{
         this.pciExpressConfigurations = pciExpressConfigurations;
     }
 
-    public Integer getMaxNumberOfPciExpressLanes() {
+    public String getMaxNumberOfPciExpressLanes() {
         return maxNumberOfPciExpressLanes;
     }
 
-    public void setMaxNumberOfPciExpressLanes(Integer maxNumberOfPciExpressLanes) {
+    public void setMaxNumberOfPciExpressLanes(String maxNumberOfPciExpressLanes) {
         this.maxNumberOfPciExpressLanes = maxNumberOfPciExpressLanes;
     }
 

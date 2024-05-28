@@ -24,12 +24,15 @@ public class ProductRyzenCPU implements Product{
     private String l2Cache;
     private String l3Cache;
     private String manufacturingTech;
+
+    private String support64Bit;
     private String memoryTypes;
     private int memoryChannel;
     private String isEccMemorySupported;
     private String integratedGraphics;
     private int graphicsBaseFrequency;
 
+    private int graphicsMaxBaseFrequency;
     private String pciExpressRevision;
     private int thermalDesignPower;
     private String coolingDevice;
@@ -284,5 +287,25 @@ public class ProductRyzenCPU implements Product{
 
     public void setIsEccMemorySupported(String isEccMemorySupported) {
         this.isEccMemorySupported = isEccMemorySupported;
+    }
+
+    public String getSupport64Bit() {
+        return support64Bit;
+    }
+
+    public void setSupport64Bit(String support64Bit) {
+        this.support64Bit = support64Bit;
+    }
+
+    public String getIsEccMemorySupported() {
+        return isEccMemorySupported;
+    }
+
+    public int getGraphicsMaxBaseFrequency() {
+        return graphicsMaxBaseFrequency;
+    }
+
+    public void setGraphicsMaxBaseFrequency(int graphicsMaxBaseFrequency) {
+        this.graphicsMaxBaseFrequency = graphicsMaxBaseFrequency;
     }
 }

@@ -8,13 +8,11 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.springframework.stereotype.Component;
 
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Component
-    public class RyzenProductScraper implements ProductScraper<ProductRyzenCPU> {
-
+public class RyzenProductScraper implements ProductScraper<ProductRyzenCPU> {
 
     private static final Logger logger = Logger.getLogger(RyzenProductScraper.class.getName());
     private String productUrl;
@@ -24,142 +22,107 @@ import java.util.logging.Logger;
         this.productRepository = productRepository;
     }
 
-
     @Override
     public ProductRyzenCPU call() {
         ChromeOptions options = new ChromeOptions();
-        // Run in headless mode for better performance
-        options.addArguments("--headless");
+        //options.addArguments("--headless");
+
         WebDriver driver = new ChromeDriver(options);
 
         try {
             driver.get(productUrl);
             logger.info("Navigated to product URL: " + productUrl);
 
-            // Scroll down the page to load additional content
             ((JavascriptExecutor) driver).executeScript("window.scrollTo(0, document.body.scrollHeight)");
-
-            // Wait for stability after scrolling
-            //Thread.sleep(2000); // Adjust the wait time as needed
+            Thread.sleep(2000);
             logger.info("Waited for stability after scrolling");
 
-            // Locate the product details section
-            WebElement productDetails = driver.findElement(By.xpath("//*[@id='product-details']"));
-
-            // Scroll to the product details section
+            WebElement productDetails = driver.findElement(By.xpath("//*[@id=\"product-details\"]"));
             ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", productDetails);
-            //Thread.sleep(1000); // Small wait to ensure scroll has completed
-
-            // Scroll a bit further down to ensure the target element is in view
+            Thread.sleep(1000);
             ((JavascriptExecutor) driver).executeScript("window.scrollBy(0, 100)");
 
-            // Click on the target element within the product details section
             WebElement elementToClick = productDetails.findElement(By.xpath("//*[@id=\"product-details\"]/div[1]/div[2]"));
             ((JavascriptExecutor) driver).executeScript("arguments[0].click();", elementToClick);
-            Thread.sleep(2000); // Wait for the specs tab content to load
+            Thread.sleep(2000);
             logger.info("Clicked 'Specs' tab");
 
-            String price = driver.findElement(By.cssSelector(".price-current")).getText();
+            String price = extractText(driver, "//*[@id=\"product-mini-feature\"]/div/div[1]/div/div[2]/ul/li[3]/span");
             logger.info("Price: " + price);
 
-            // Now locate the elements under the "Specs" tab
-            String brand = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[2]/tbody/tr[1]/td")).getText();
-            logger.info("Brand:" + brand);
+            String brand = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[2]/tbody/tr[1]/td");
+            logger.info("Brand: " + brand);
 
-            String processorsType = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[2]/tbody/tr[2]/td")).getText();
+            String processorsType = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[2]/tbody/tr[2]/td");
             logger.info("Processor Type: " + processorsType);
 
-            String series = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[2]/tbody/tr[3]/td")).getText();
+            String series = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[2]/tbody/tr[3]/td");
             logger.info("Series: " + series);
 
-            String name = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[2]/tbody/tr[4]/td")).getText();
+            String name = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[2]/tbody/tr[4]/td");
             logger.info("Name: " + name);
 
-            String model = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[2]/tbody/tr[5]/td")).getText();
+            String model = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[2]/tbody/tr[5]/td");
             logger.info("Model: " + model);
 
-            String cpuSocketType = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[1]/td")).getText();
+            String cpuSocketType = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[1]/td");
             logger.info("Socket: " + cpuSocketType);
 
-            String numberOfCoresText = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[2]/td"))
-                    .getText()
-                    .replaceAll("\\D", ""); // Remove non-digit characters
-
-            int numberOfCores = 0; // Default value in case the text is empty
-            if (!numberOfCoresText.isEmpty()) {
-                numberOfCores = Integer.parseInt(numberOfCoresText);
-            }
+            int numberOfCores = parseInt(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[2]/td");
             logger.info("Number of Cores: " + numberOfCores);
 
-            String numberOfThreadsText = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[3]/td")).getText();
-            String[] numberOfThreadsParts = numberOfThreadsText.split("-");
-            int numberOfThreads = Integer.parseInt(numberOfThreadsParts[0].trim());
+            int numberOfThreads = parseInt(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[3]/td");
             logger.info("Number of Threads: " + numberOfThreads);
 
-            String operatingFrequencyText = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[4]/td")).getText();
-            double operatingFrequency = Double.parseDouble(operatingFrequencyText.replaceAll("[^0-9.]", ""));
+            double operatingFrequency = parseDouble(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[4]/td");
             logger.info("Operating Frequency: " + operatingFrequency);
 
-            // Extracting max turbo frequency from the text
-            String maxTurboFrequencyText = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[5]/td"))
-                    .getText()
-                    .replaceAll("[^\\d.]+", "") // Remove non-digit characters except the first decimal point
-                    .replaceFirst("\\.(?=.*\\.)", ""); // Remove all subsequent decimal points
-
-            double maxTurboFrequency = 0.0; // Default value in case the text is empty
-            if (!maxTurboFrequencyText.isEmpty()) {
-                maxTurboFrequency = Double.parseDouble(maxTurboFrequencyText);
-            }
+            double maxTurboFrequency = parseDouble(driver, "/html/body/div[36]/div[3]/div/div/div/div[2]/div[2]/div/div[1]/div[6]/div[2]/div[2]/table[3]/tbody/tr[5]/td");
             logger.info("Max Turbo Frequency: " + maxTurboFrequency);
 
-            String l1Cache = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[6]/td")).getText();
+            String l1Cache = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[6]/td");
             logger.info("L1 Cache: " + l1Cache);
 
-            String l2Cache = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[7]/td")).getText();
+            String l2Cache = extractText(driver, "/html/body/div[36]/div[3]/div/div/div/div[2]/div[2]/div/div[1]/div[6]/div[2]/div[2]/table[3]/tbody/tr[7]/td");
             logger.info("L2 Cache: " + l2Cache);
 
-            String l3Cache = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[8]/td")).getText();
+            String l3Cache = extractText(driver, "/html/body/div[36]/div[3]/div/div/div/div[2]/div[2]/div/div[1]/div[6]/div[2]/div[2]/table[3]/tbody/tr[8]/td");
             logger.info("L3 Cache: " + l3Cache);
 
-            String manufacturingTech = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[9]/td")).getText();
+            String manufacturingTech = extractText(driver, "/html/body/div[36]/div[3]/div/div/div/div[2]/div[2]/div/div[1]/div[6]/div[2]/div[2]/table[3]/tbody/tr[9]/td");
             logger.info("Manufacturing Tech: " + manufacturingTech);
 
-            String memoryTypes = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[10]/td")).getText();
+            String support64Bit = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[10]/td");
+            logger.info("64 Bit Support: " + support64Bit);
+
+            String memoryTypes = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[11]/td");
             logger.info("Memory Types: " + memoryTypes);
 
-            String memoryChannelText = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[11]/td")).getText();
-            int memoryChannel = 0; // Default value in case the text is empty or non-numeric
-            if (!memoryChannelText.isEmpty()) {
-                // Remove non-numeric characters from the string
-                String numericPart = memoryChannelText.replaceAll("\\D", "");
-                if (!numericPart.isEmpty()) {
-                    // Parse the numeric part into an integer
-                    memoryChannel = Integer.parseInt(numericPart);
-                }
-            }
+            int memoryChannel = parseInt(driver, "/html/body/div[36]/div[3]/div/div/div/div[2]/div[2]/div/div[1]/div[6]/div[2]/div[2]/table[3]/tbody/tr[12]/td");
             logger.info("Memory Channel: " + memoryChannel);
 
-            String isEccMemorySupported = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[13]/td")).getText();
-            logger.info("Is Ecc Memory Supported: " + isEccMemorySupported);
+            String isEccMemorySupported = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[13]/td");
+            logger.info("Is ECC Memory Supported: " + isEccMemorySupported);
 
-            String integratedGraphics = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[14]/td")).getText();
+            String integratedGraphics = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[14]/td");
             logger.info("Integrated Graphics: " + integratedGraphics);
 
-            String graphicsBaseFrequencyText = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[15]/td")).getText();
-            int graphicsBaseFrequency = Integer.parseInt(graphicsBaseFrequencyText.replaceAll("[^0-9]", ""));
+            int graphicsBaseFrequency = parseInt(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[15]/td");
             logger.info("Graphics Base Frequency: " + graphicsBaseFrequency);
 
-            String pciExpressRevision = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[16]/td")).getText();
+            int graphicsMaxBaseFrequency = parseInt(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[16]/td");
+            logger.info("Graphics Max Base Frequency: " + graphicsMaxBaseFrequency);
+
+            String pciExpressRevision = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[17]/td");
             logger.info("PCI Express Revision: " + pciExpressRevision);
 
-            String thermalDesignPowerText = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[17]/td")).getText();
-            int thermalDesignPower = Integer.parseInt(thermalDesignPowerText.replaceAll("[^0-9]", ""));
+            int thermalDesignPower = parseInt(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[18]/td");
             logger.info("Thermal Design Power: " + thermalDesignPower);
 
-            String coolingDevice = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[18]/td")).getText();
+            String coolingDevice = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[19]/td");
             logger.info("Cooling Device: " + coolingDevice);
 
-            String operatingSystemSupported = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[19]/td")).getText();
+            String operatingSystemSupported = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[20]/td");
             logger.info("Operating System Supported: " + operatingSystemSupported);
 
             ProductRyzenCPU product = new ProductRyzenCPU();
@@ -177,38 +140,68 @@ import java.util.logging.Logger;
             product.setL2Cache(l2Cache);
             product.setL3Cache(l3Cache);
             product.setManufacturingTech(manufacturingTech);
+            product.setSupport64Bit(support64Bit);
             product.setMemoryTypes(memoryTypes);
             product.setMemoryChannel(memoryChannel);
             product.setIsEccMemorySupported(isEccMemorySupported);
             product.setIntegratedGraphics(integratedGraphics);
             product.setGraphicsBaseFrequency(graphicsBaseFrequency);
+            product.setGraphicsMaxBaseFrequency(graphicsMaxBaseFrequency);
             product.setPciExpressRevision(pciExpressRevision);
             product.setThermalDesignPower(thermalDesignPower);
             product.setCoolingDevice(coolingDevice);
             product.setOperatingSystemSupported(operatingSystemSupported);
             product.setCategory(new Category("CPU", "Processors"));
-            // Save the product to the database
-            productRepository.save(product);
+
+            saveProduct(product);
 
             logger.info("Product saved successfully");
 
             return product;
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error scraping or saving product data from URL: " + productUrl, e);
-            return null; // Or handle the error as needed
+            return null;
         } finally {
             driver.quit();
             logger.info("Driver quit");
         }
     }
 
+    private String extractText(WebDriver driver, String xpath) {
+        try {
+            return driver.findElement(By.xpath(xpath)).getText();
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Failed to extract text for xpath: " + xpath, e);
+            return "";
+        }
+    }
+
+    private int parseInt(WebDriver driver, String xpath) {
+        try {
+            String text = driver.findElement(By.xpath(xpath)).getText().replaceAll("\\D", "");
+            return text.isEmpty() ? 0 : Integer.parseInt(text);
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Failed to parse int for xpath: " + xpath, e);
+            return 0;
+        }
+    }
+
+    private double parseDouble(WebDriver driver, String xpath) {
+        try {
+            String text = driver.findElement(By.xpath(xpath)).getText().replaceAll("[^\\d.]", "");
+            return text.isEmpty() ? 0.0 : Double.parseDouble(text);
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Failed to parse double for xpath: " + xpath, e);
+            return 0.0;
+        }
+    }
+
     @Override
     public String extractBrand() {
-        // Extract the brand from the product URL
         if (productUrl.contains("amd")) {
             return "AMD";
         } else {
-            return "Unknown"; // Handle the case where brand is not found or unrecognized
+            return "Unknown";
         }
     }
 

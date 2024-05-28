@@ -1,6 +1,8 @@
 package org.example;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
+import org.example.model.ProductIntelCPU;
+import org.example.model.ProductRyzenCPU;
 import org.example.repository.IntelProductRepository;
 import org.example.repository.RyzenProductRepository;
 import org.example.scraping.IntelProductScraperFactory;
@@ -35,7 +37,7 @@ public class WebScraper<T> implements CommandLineRunner {
     private static final int THREAD_POOL_SIZE = 10;
 
     @Override
-    public void run(String... args) {
+    public void run(String... args) throws InterruptedException {
         WebDriverManager.chromedriver().setup();
         ExecutorService executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 
@@ -44,8 +46,8 @@ public class WebScraper<T> implements CommandLineRunner {
             int page = 1;
             boolean hasNextPage = true;
 
-            ProductScraperFactory ryzenScraperFactory = new RyzenProductScraperFactory(ryzenProductRepository);
-            ProductScraperFactory intelScraperFactory = new IntelProductScraperFactory(intelProductRepository);
+            ProductScraperFactory<ProductRyzenCPU> ryzenScraperFactory = new RyzenProductScraperFactory(ryzenProductRepository);
+            ProductScraperFactory<ProductIntelCPU> intelScraperFactory = new IntelProductScraperFactory(intelProductRepository);
 
             while (hasNextPage) {
                 String url = baseUrl + "&Page=" + page;
@@ -71,6 +73,7 @@ public class WebScraper<T> implements CommandLineRunner {
                         @SuppressWarnings("rawtypes")
                         final ProductScraper scraper;
                         if ("amd".equalsIgnoreCase(brand)) {
+                            Thread.sleep(3000);
                             scraper = ryzenScraperFactory.getScraper(productUrl);
                         } else if ("intel".equalsIgnoreCase(brand)) {
                             scraper = intelScraperFactory.getScraper(productUrl);
