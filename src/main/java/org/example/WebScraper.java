@@ -1,10 +1,12 @@
 package org.example;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
-import org.example.model.ProductRyzenCPU;
-import org.example.repository.ProductRepository;
+import org.example.repository.IntelProductRepository;
+import org.example.repository.RyzenProductRepository;
+import org.example.scraping.IntelProductScraperFactory;
 import org.example.scraping.ProductScraper;
 import org.example.scraping.ProductScraperFactory;
+import org.example.scraping.RyzenProductScraperFactory;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -20,12 +22,15 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Component
-public class WebScraper implements CommandLineRunner {
+public class WebScraper<T> implements CommandLineRunner {
 
     private static final Logger logger = Logger.getLogger(WebScraper.class.getName());
 
     @Autowired
-    private ProductRepository productRepository;
+    private RyzenProductRepository ryzenProductRepository;
+
+    @Autowired
+    private IntelProductRepository intelProductRepository;
 
     private static final int THREAD_POOL_SIZE = 10;
 
@@ -39,6 +44,9 @@ public class WebScraper implements CommandLineRunner {
             int page = 1;
             boolean hasNextPage = true;
 
+            ProductScraperFactory ryzenScraperFactory = new RyzenProductScraperFactory(ryzenProductRepository);
+            ProductScraperFactory intelScraperFactory = new IntelProductScraperFactory(intelProductRepository);
+
             while (hasNextPage) {
                 String url = baseUrl + "&Page=" + page;
                 logger.info("Fetching URL: " + url);
@@ -47,7 +55,6 @@ public class WebScraper implements CommandLineRunner {
                 driver.get(url);
                 logger.info("Page loaded successfully");
 
-
                 List<WebElement> productRows = driver.findElements(By.cssSelector(".item-cell"));
                 if (productRows.isEmpty()) {
                     hasNextPage = false;
@@ -55,20 +62,30 @@ public class WebScraper implements CommandLineRunner {
                 } else {
                     for (WebElement row : productRows) {
                         String productUrl = row.findElement(By.cssSelector(".item-title")).getAttribute("href");
-
                         logger.info("Scraping product from URL: " + productUrl);
 
-                        // Use the factory to obtain the appropriate scraper
-                        // Create a factory and use it to obtain the appropriate scraper
-                        ProductScraperFactory scraperFactory = new ProductScraperFactory(productRepository);
-                        ProductScraper scraper = scraperFactory.getScraper(productUrl);
+                        // Determine the brand of the CPU
+                        String brand = getBrandFromUrl(productUrl);
+
+                        // Get the appropriate scraper based on the brand
+                        @SuppressWarnings("rawtypes")
+                        final ProductScraper scraper;
+                        if ("amd".equalsIgnoreCase(brand)) {
+                            scraper = ryzenScraperFactory.getScraper(productUrl);
+                        } else if ("intel".equalsIgnoreCase(brand)) {
+                            scraper = intelScraperFactory.getScraper(productUrl);
+                        } else {
+                            continue; // Skip if brand is neither AMD nor Intel
+                        }
+
                         if (scraper != null) {
                             scraper.setProductUrl(productUrl); // Set the product URL
+                            final ProductScraper<T> finalScraper = scraper; // Final or effectively final variable
                             // Submit the scraper to the executor service
                             executorService.submit(() -> {
-                                ProductRyzenCPU product = scraper.call();
+                                T product = finalScraper.call();
                                 if (product != null) {
-                                    scraper.saveProduct(product);
+                                    finalScraper.saveProduct(product);
                                 }
                             });
                             try {
@@ -78,19 +95,23 @@ public class WebScraper implements CommandLineRunner {
                                 Thread.currentThread().interrupt(); // Preserve interrupted status
                             }
                         }
-
                     }
-
-                    page++;
                 }
-
-                driver.quit();
-                logger.info("Browser closed");
             }
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "An error occurred while fetching the webpage", e);
         } finally {
-            executorService.shutdown();
+            System.out.println("Yup");
         }
     }
-}
+
+    // Method to extract brand from URL
+    private String getBrandFromUrl(String productUrl) {
+        if (productUrl.contains("amd")) {
+            return "amd";
+        } else if (productUrl.contains("intel")) {
+            return "intel";
+        } else {
+            return ""; // Handle other cases
+        }
+    }
+
+    }

@@ -2,7 +2,7 @@ package org.example.scraping;
 
 import org.example.model.Category;
 import org.example.model.ProductRyzenCPU;
-import org.example.repository.ProductRepository;
+import org.example.repository.RyzenProductRepository;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -13,14 +13,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Component
-public class RyzenProductScraper implements ProductScraper {
+    public class RyzenProductScraper implements ProductScraper<ProductRyzenCPU> {
 
 
     private static final Logger logger = Logger.getLogger(RyzenProductScraper.class.getName());
     private String productUrl;
-    private final ProductRepository productRepository;
+    private final RyzenProductRepository productRepository;
 
-    public RyzenProductScraper(ProductRepository productRepository) {
+    public RyzenProductScraper(RyzenProductRepository productRepository) {
         this.productRepository = productRepository;
     }
 

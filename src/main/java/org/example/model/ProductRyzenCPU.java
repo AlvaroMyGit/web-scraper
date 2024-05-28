@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "ryzen_cpu")
-public class ProductRyzenCPU {
+public class ProductRyzenCPU implements Product{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

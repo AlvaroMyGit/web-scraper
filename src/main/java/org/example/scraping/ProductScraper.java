@@ -1,16 +1,14 @@
 package org.example.scraping;
 
-import org.example.model.ProductRyzenCPU;
-
 import java.util.concurrent.Callable;
 
-public interface ProductScraper extends Callable {
+public interface ProductScraper<T> extends Callable<T> {
     @Override
-    ProductRyzenCPU call();
+    T call();
 
     String extractBrand();
 
-    void saveProduct(ProductRyzenCPU product);
+    void saveProduct(T product);
 
     void setProductUrl(String productUrl);
 }

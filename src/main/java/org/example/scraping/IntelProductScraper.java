@@ -1,32 +1,33 @@
 package org.example.scraping;
 
+import org.example.model.ProductIntelCPU;
 import org.example.model.ProductRyzenCPU;
-import org.example.repository.ProductRepository;
+import org.example.repository.IntelProductRepository;
+import org.example.repository.RyzenProductRepository;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Component
-public class IntelProductScraper implements ProductScraper {
+public class IntelProductScraper implements ProductScraper<ProductIntelCPU> {
 
     private static final Logger logger = Logger.getLogger(IntelProductScraper.class.getName());
     private String productUrl;
-    private final ProductRepository productRepository;
+    private final IntelProductRepository intelProductRepository;
 
-    public IntelProductScraper(ProductRepository productRepository) {
-        this.productRepository = productRepository;
+    public IntelProductScraper(IntelProductRepository intelProductRepository) {
+        this.intelProductRepository = intelProductRepository;
     }
 
     @Override
-    public ProductRyzenCPU call() {
+    public ProductIntelCPU call() {
         // Initialize ChromeOptions to configure WebDriver
         ChromeOptions options = new ChromeOptions();
         // Run WebDriver in headless mode for better performance
@@ -95,9 +96,9 @@ public class IntelProductScraper implements ProductScraper {
     }
 
     @Override
-    public void saveProduct(ProductRyzenCPU product) {
+    public void saveProduct(ProductIntelCPU product) {
         if (product != null) {
-            productRepository.save(product);
+            intelProductRepository.save(product);
             logger.info("Product saved successfully");
         } else {
             logger.warning("Attempted to save null product");
