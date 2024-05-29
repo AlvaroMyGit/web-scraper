@@ -122,6 +122,13 @@ public class RyzenProductScraper implements ProductScraper<ProductRyzenCPU> {
             String coolingDevice = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[19]/td");
             logger.info("Cooling Device: " + coolingDevice);
 
+            WebElement lastElement = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[20]/td"));
+
+            // Scroll the element into view
+            ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", lastElement);
+            // Wait for a brief moment to ensure the scroll action completes
+            Thread.sleep(1000); // Adjust the wait time as needed
+
             String operatingSystemSupported = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[20]/td");
             logger.info("Operating System Supported: " + operatingSystemSupported);
 
