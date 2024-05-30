@@ -2,6 +2,8 @@ package org.example.model;
 
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "ryzen_cpu")
 public class ProductRyzenCPU implements Product{
@@ -14,6 +16,8 @@ public class ProductRyzenCPU implements Product{
     private String processorsType;
     private String series;
     private String name;
+
+    private BigDecimal price;
     private String model;
     private String cpuSocketType;
     private int numberOfCores;
@@ -38,7 +42,7 @@ public class ProductRyzenCPU implements Product{
     private String coolingDevice;
     private String operatingSystemSupported;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
 
@@ -307,5 +311,13 @@ public class ProductRyzenCPU implements Product{
 
     public void setGraphicsMaxBaseFrequency(int graphicsMaxBaseFrequency) {
         this.graphicsMaxBaseFrequency = graphicsMaxBaseFrequency;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
     }
 }

@@ -2,6 +2,8 @@ package org.example.model;
 
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "intel_cpu")
 public class ProductIntelCPU implements Product{
@@ -14,6 +16,8 @@ public class ProductIntelCPU implements Product{
     private String processorsType;
     private String series;
     private String name;
+
+    private BigDecimal price;
     private String model;
     private String cpuSocketType;
     private String coreName;
@@ -415,4 +419,30 @@ public class ProductIntelCPU implements Product{
     public void setSecurityAndReliability(String securityAndReliability) {
         this.securityAndReliability = securityAndReliability;
     }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public void setOperatingFrequencyPerformanceCoreBase(Double operatingFrequencyPerformanceCoreBase) {
+        this.operatingFrequencyPerformanceCoreBase = operatingFrequencyPerformanceCoreBase;
+    }
+
+    public void setMaxTurboFrequencyTurboBoostMaxTechnology(Double maxTurboFrequencyTurboBoostMaxTechnology) {
+        this.maxTurboFrequencyTurboBoostMaxTechnology = maxTurboFrequencyTurboBoostMaxTechnology;
+    }
+
+    public void setMaxTurboFrequencyPCore(Double maxTurboFrequencyPCore) {
+        this.maxTurboFrequencyPCore = maxTurboFrequencyPCore;
+    }
+
+    public void setMaxTurboFrequencyECore(Double maxTurboFrequencyECore) {
+        this.maxTurboFrequencyECore = maxTurboFrequencyECore;
+    }
+
+
 }

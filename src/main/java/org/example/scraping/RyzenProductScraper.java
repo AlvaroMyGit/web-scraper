@@ -2,12 +2,18 @@ package org.example.scraping;
 
 import org.example.model.Category;
 import org.example.model.ProductRyzenCPU;
+import org.example.repository.CategoryRepository;
 import org.example.repository.RyzenProductRepository;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -18,8 +24,11 @@ public class RyzenProductScraper implements ProductScraper<ProductRyzenCPU> {
     private String productUrl;
     private final RyzenProductRepository productRepository;
 
-    public RyzenProductScraper(RyzenProductRepository productRepository) {
+    private final CategoryRepository categoryRepository;
+
+    public RyzenProductScraper(RyzenProductRepository productRepository, CategoryRepository categoryRepository) {
         this.productRepository = productRepository;
+        this.categoryRepository = categoryRepository;
     }
 
     @Override
@@ -34,21 +43,21 @@ public class RyzenProductScraper implements ProductScraper<ProductRyzenCPU> {
             logger.info("Navigated to product URL: " + productUrl);
 
             ((JavascriptExecutor) driver).executeScript("window.scrollTo(0, document.body.scrollHeight)");
-            Thread.sleep(2000);
+            Thread.sleep(4000);
             logger.info("Waited for stability after scrolling");
 
-            WebElement productDetails = driver.findElement(By.xpath("//*[@id=\"product-details\"]"));
+            // Use WebDriverWait to wait for the element to be present
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+            WebElement productDetails = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"product-details\"]")));
+
             ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", productDetails);
             Thread.sleep(1000);
-            ((JavascriptExecutor) driver).executeScript("window.scrollBy(0, 100)");
 
             WebElement elementToClick = productDetails.findElement(By.xpath("//*[@id=\"product-details\"]/div[1]/div[2]"));
             ((JavascriptExecutor) driver).executeScript("arguments[0].click();", elementToClick);
             Thread.sleep(2000);
             logger.info("Clicked 'Specs' tab");
 
-            String price = extractText(driver, "//*[@id=\"product-mini-feature\"]/div/div[1]/div/div[2]/ul/li[3]/span");
-            logger.info("Price: " + price);
 
             String brand = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[2]/tbody/tr[1]/td");
             logger.info("Brand: " + brand);
@@ -61,6 +70,9 @@ public class RyzenProductScraper implements ProductScraper<ProductRyzenCPU> {
 
             String name = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[2]/tbody/tr[4]/td");
             logger.info("Name: " + name);
+
+            BigDecimal price = parseBigDecimal(driver, "//*[@id=\"app\"]/div[3]/div/div/div/div[1]/div[1]/div[1]/div[1]/ul/li[3]");
+            logger.info("Price: " + price);
 
             String model = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[2]/tbody/tr[5]/td");
             logger.info("Model: " + model);
@@ -98,6 +110,8 @@ public class RyzenProductScraper implements ProductScraper<ProductRyzenCPU> {
             String memoryTypes = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[11]/td");
             logger.info("Memory Types: " + memoryTypes);
 
+            Thread.sleep(3000);
+
             int memoryChannel = parseInt(driver, "/html/body/div[36]/div[3]/div/div/div/div[2]/div[2]/div/div[1]/div[6]/div[2]/div[2]/table[3]/tbody/tr[12]/td");
             logger.info("Memory Channel: " + memoryChannel);
 
@@ -122,21 +136,16 @@ public class RyzenProductScraper implements ProductScraper<ProductRyzenCPU> {
             String coolingDevice = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[19]/td");
             logger.info("Cooling Device: " + coolingDevice);
 
-            WebElement lastElement = driver.findElement(By.xpath("//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[20]/td"));
-
-            // Scroll the element into view
-            ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", lastElement);
-            // Wait for a brief moment to ensure the scroll action completes
-            Thread.sleep(1000); // Adjust the wait time as needed
-
             String operatingSystemSupported = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[20]/td");
             logger.info("Operating System Supported: " + operatingSystemSupported);
 
             ProductRyzenCPU product = new ProductRyzenCPU();
+            Category cpuCategory = categoryRepository.findByName("CPU");
             product.setBrand(brand);
             product.setProcessorsType(processorsType);
             product.setSeries(series);
             product.setName(name);
+            product.setPrice(price);
             product.setModel(model);
             product.setCpuSocketType(cpuSocketType);
             product.setNumberOfCores(numberOfCores);
@@ -158,7 +167,7 @@ public class RyzenProductScraper implements ProductScraper<ProductRyzenCPU> {
             product.setThermalDesignPower(thermalDesignPower);
             product.setCoolingDevice(coolingDevice);
             product.setOperatingSystemSupported(operatingSystemSupported);
-            product.setCategory(new Category("CPU", "Processors"));
+            product.setCategory(cpuCategory);
 
             saveProduct(product);
 
@@ -180,6 +189,16 @@ public class RyzenProductScraper implements ProductScraper<ProductRyzenCPU> {
         } catch (Exception e) {
             logger.log(Level.WARNING, "Failed to extract text for xpath: " + xpath, e);
             return "";
+        }
+    }
+
+    private BigDecimal parseBigDecimal(WebDriver driver, String xpath) {
+        try {
+            String text = driver.findElement(By.xpath(xpath)).getText().replaceAll("[^\\d.]", "");
+            return text.isEmpty() ? BigDecimal.ZERO : new BigDecimal(text);
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Failed to parse BigDecimal for xpath: " + xpath, e);
+            return BigDecimal.ZERO;
         }
     }
 
@@ -229,4 +248,5 @@ public class RyzenProductScraper implements ProductScraper<ProductRyzenCPU> {
     public void setProductUrl(String productUrl) {
         this.productUrl = productUrl;
     }
+
 }

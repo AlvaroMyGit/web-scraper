@@ -6,11 +6,12 @@ CREATE TABLE category (
 
 CREATE TABLE ryzen_cpu (
     id SERIAL PRIMARY KEY,
-    brand VARCHAR(255),
+    brand VARCHAR(255) NOT NULL,
     processors_type VARCHAR(255),
     series VARCHAR(255),
-    name VARCHAR(255),
-    model VARCHAR(255),
+    name VARCHAR(255) NOT NULL,
+    price DECIMAL(10, 2),
+    model VARCHAR(255) NOT NULL,
     cpu_socket_type VARCHAR(255),
     number_of_cores INTEGER,
     number_of_threads INTEGER,
@@ -30,16 +31,31 @@ CREATE TABLE ryzen_cpu (
     pci_express_revision VARCHAR(255),
     thermal_design_power INTEGER,
     cooling_device VARCHAR(255),
-    operating_system_supported VARCHAR(255)
+    operating_system_supported VARCHAR(255),
+    category_id INTEGER NOT NULL,  -- Foreign key referencing category(id)
+    CONSTRAINT fk_category
+        FOREIGN KEY (category_id)
+        REFERENCES category(id),
+    CONSTRAINT ck_positive_values CHECK (
+        number_of_cores > 0 AND
+        number_of_threads > 0 AND
+        operating_frequency > 0 AND
+        max_turbo_frequency > 0 AND
+        memory_channel > 0 AND
+        graphics_base_frequency > 0 AND
+        graphics_max_base_frequency > 0 AND
+        thermal_design_power > 0
+    )
 );
 
 CREATE TABLE intel_cpu (
     id SERIAL PRIMARY KEY,
-    brand VARCHAR(255),
+    brand VARCHAR(255) NOT NULL,
     processors_type VARCHAR(255),
     series VARCHAR(255),
-    name VARCHAR(255),
-    model VARCHAR(255),
+    name VARCHAR(255) NOT NULL,
+    price DECIMAL(10, 2),
+    model VARCHAR(255) NOT NULL,
     cpu_socket_type VARCHAR(255),
     core_name VARCHAR(255),
     number_of_cores INTEGER,
@@ -73,7 +89,27 @@ CREATE TABLE intel_cpu (
     compatible_desktop_chipsets VARCHAR(255),
     operating_system_supported VARCHAR(255),
     advanced_technologies VARCHAR(255),
-    security_and_reliability VARCHAR(255)
+    security_and_reliability VARCHAR(255),
+    category_id INTEGER NOT NULL,  -- Foreign key referencing category(id)
+    CONSTRAINT fk_category
+        FOREIGN KEY (category_id)
+        REFERENCES category(id),
+    CONSTRAINT ck_positive_values CHECK (
+        number_of_cores > 0 AND
+        number_of_threads > 0 AND
+        operating_frequency_performance_core_base > 0 AND
+        operating_frequency_efficient_core_base > 0 AND
+        max_turbo_frequency_turbo_boost_max_technology > 0 AND
+        max_turbo_frequency_p_core > 0 AND
+        max_turbo_frequency_e_core > 0 AND
+        memory_channel > 0 AND
+        max_memory_size > 0 AND
+        graphics_base_frequency > 0 AND
+        graphics_max_dynamic_frequency > 0 AND
+        max_number_of_pci_express_lanes > 0 AND
+        thermal_design_power > 0 AND
+        max_turbo_power > 0
+    )
 );
 
 CREATE TABLE compatibility (
@@ -82,3 +118,5 @@ CREATE TABLE compatibility (
     category2_id INTEGER REFERENCES category(id),
     compatibility_rule TEXT NOT NULL -- JSON or text describing the compatibility rule
 );
+
+INSERT INTO category (name, description) VALUES ('CPU', 'Central Processing Units');

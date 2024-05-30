@@ -3,6 +3,7 @@ package org.example;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.example.model.ProductIntelCPU;
 import org.example.model.ProductRyzenCPU;
+import org.example.repository.CategoryRepository;
 import org.example.repository.IntelProductRepository;
 import org.example.repository.RyzenProductRepository;
 import org.example.scraping.IntelProductScraperFactory;
@@ -19,9 +20,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -36,7 +35,11 @@ public class WebScraper<T> implements CommandLineRunner {
     @Autowired
     private IntelProductRepository intelProductRepository;
 
-    private final Deque<String> urlQueue = new LinkedList<>();
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    private final Set<String> processedUrls = new HashSet<>();
+    private final BlockingQueue<String> urlQueue = new LinkedBlockingQueue<>();
 
     private static final List<String> USER_AGENTS = Arrays.asList(
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.61 Safari/537.36",
@@ -51,109 +54,135 @@ public class WebScraper<T> implements CommandLineRunner {
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
     );
 
-    // Semaphore to control access to the WebDriver
     private final Semaphore semaphore = new Semaphore(1);
 
     @Override
-    public void run(String... args) throws InterruptedException {
+    public void run(String... args) {
+
+        System.setProperty("webdriver.chrome.logfile", "C:\\Users\\Álvaro\\Documents\\chromedriver.log");
+        System.setProperty("webdriver.chrome.verboseLogging", "true");
+
         WebDriverManager.chromedriver().setup();
-        // Use single-thread executor for sequential execution
-        ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-        try {
-            String baseUrl = "https://www.newegg.com/Processors-Desktops/SubCategory/ID-343?PageSize=96";
-            int page = 1;
-            boolean hasNextPage = true;
+        ExecutorService scrapingExecutor = Executors.newSingleThreadExecutor();
+        ScheduledExecutorService urlFetchingExecutor = Executors.newScheduledThreadPool(1);
 
-            ProductScraperFactory<ProductRyzenCPU> ryzenScraperFactory = new RyzenProductScraperFactory(ryzenProductRepository);
-            ProductScraperFactory<ProductIntelCPU> intelScraperFactory = new IntelProductScraperFactory(intelProductRepository);
+        ProductScraperFactory<ProductRyzenCPU> ryzenScraperFactory = new RyzenProductScraperFactory(ryzenProductRepository, categoryRepository);
+        ProductScraperFactory<ProductIntelCPU> intelScraperFactory = new IntelProductScraperFactory(intelProductRepository, categoryRepository);
 
-            while (hasNextPage) {
-                String url = baseUrl + "&Page=" + page;
-                logger.info("Fetching URL: " + url);
+        urlFetchingExecutor.scheduleWithFixedDelay(() -> {
+            try {
+                fetchProductUrls();
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Error fetching URLs", e);
+            }
+        }, 0, 1, TimeUnit.SECONDS);
 
-
-                // Randomly select a user-agent string
-                String userAgent = getRandomUserAgent();
-
-                ChromeOptions options = new ChromeOptions();
-                options.addArguments("--user-agent=" + userAgent);
-
-                WebDriver driver = new ChromeDriver(options);
-
-                // Log WebDriver activities
-                // Path to log file
-                System.setProperty("webdriver.chrome.logfile", "C:\\Users\\Álvaro\\Documents\\chromedriver.log");
-                System.setProperty("webdriver.chrome.verboseLogging", "true");
-
+        scrapingExecutor.submit(() -> {
+            while (true) {
                 try {
-                    driver.get(url);
-                    logger.info("Page loaded successfully");
+                    String productUrl = urlQueue.take();
+                    if (productUrl == null) continue;
 
-                    List<WebElement> productRows = driver.findElements(By.cssSelector(".item-cell"));
-                    if (productRows.isEmpty()) {
-                        hasNextPage = false;
-                        logger.info("No more products found, ending pagination.");
+                    String brand = getBrandFromUrl(productUrl);
+
+                    @SuppressWarnings("rawtypes")
+                    final ProductScraper scraper;
+                    if ("amd".equalsIgnoreCase(brand)) {
+                        scraper = ryzenScraperFactory.getScraper(productUrl);
+                    } else if ("intel".equalsIgnoreCase(brand)) {
+                        scraper = intelScraperFactory.getScraper(productUrl);
                     } else {
-                        synchronized (this) {
-                            for (WebElement row : productRows) {
-                                String productUrl = row.findElement(By.cssSelector(".item-title")).getAttribute("href");
-                                logger.info("Fetching URL from table: " + productUrl);
-                                urlQueue.add(productUrl);
-                                logger.info("Adding product URL to the Deque List: " + productUrl);
+                        continue;
+                    }
 
-                                // Determine the brand of the CPU
-                                String brand = getBrandFromUrl(productUrl);
+                    if (scraper != null) {
+                        scraper.setProductUrl(productUrl);
+                        logger.info("Set the Product URL for the scraper: " + productUrl);
+                        final ProductScraper<T> finalScraper = scraper;
 
-                                // Get the appropriate scraper based on the brand
-                                @SuppressWarnings("rawtypes") final ProductScraper scraper;
-                                if ("amd".equalsIgnoreCase(brand)) {
-                                    scraper = ryzenScraperFactory.getScraper(productUrl);
-                                } else if ("intel".equalsIgnoreCase(brand)) {
-                                    scraper = intelScraperFactory.getScraper(productUrl);
-                                } else {
-                                    // Skip if brand is neither AMD nor Intel
-                                    continue;
-                                }
+                        semaphore.acquire();
 
-                                if (scraper != null) {
-                                    // Set the product URL
-                                    scraper.setProductUrl(productUrl);
-                                    // Final or effectively final variable
-                                    final ProductScraper<T> finalScraper = scraper;
-
-                                    // Acquire the semaphore
-                                    semaphore.acquire();
-
-                                    // Submit the scraper to the executor service
-                                    executorService.submit(() -> {
-                                        try {
-                                            T product = finalScraper.call();
-                                            if (product != null) {
-                                                finalScraper.saveProduct(product);
-                                            }
-                                        } finally {
-                                            semaphore.release();
-                                        }
-                                    });
-                                }
+                        try {
+                            T product = finalScraper.call();
+                            if (product != null) {
+                                finalScraper.saveProduct(product);
                             }
+                        } catch (Exception e) {
+                            logger.log(Level.SEVERE, "Error scraping or saving product data from URL: " + productUrl, e);
+                        } finally {
+                            semaphore.release();
+                        }
+
+                        // Introduce a random delay between product scrapes
+                        try {
+                            Thread.sleep(new Random().nextInt(1000) + 500);
+                        } catch (InterruptedException e) {
+                            logger.log(Level.WARNING, "Interrupted during delay", e);
+                            Thread.currentThread().interrupt();
                         }
                     }
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error during scraping", e);
-                } finally {
-                    driver.quit();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
                 }
-                page++;
             }
-            while (!urlQueue.isEmpty()) {
-                String currentUrl = urlQueue.poll(); // Dequeue URL from the queue
-                logger.info("Scraping product from URL: " + currentUrl);
+        });
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                scrapingExecutor.shutdown();
+                scrapingExecutor.awaitTermination(10, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } finally {
+                urlFetchingExecutor.shutdownNow();
             }
-        } finally {
-            System.out.println("Scraping complete");
-            executorService.shutdown();
+        }));
+    }
+
+    private void fetchProductUrls() {
+        String baseUrl = "https://www.newegg.com/Processors-Desktops/SubCategory/ID-343?PageSize=96";
+        int page = 1;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+            String url = baseUrl + "&Page=" + page;
+            logger.info("Fetching URL: " + url);
+
+            String userAgent = getRandomUserAgent();
+
+            ChromeOptions options = new ChromeOptions();
+            options.addArguments("--user-agent=" + userAgent);
+            options.addArguments("--headless");
+            options.setExperimentalOption("useAutomationExtension", false);
+            options.setExperimentalOption("excludeSwitches", Collections.singletonList("enable-automation"));
+
+            WebDriver driver = new ChromeDriver(options);
+
+            try {
+                driver.get(url);
+                logger.info("Page loaded successfully");
+
+                List<WebElement> productRows = driver.findElements(By.cssSelector(".item-cell"));
+                if (productRows.isEmpty()) {
+                    hasNextPage = false;
+                    logger.info("No more products found, ending pagination.");
+                } else {
+                    for (WebElement row : productRows) {
+                        String productUrl = row.findElement(By.cssSelector(".item-title")).getAttribute("href");
+                        if (processedUrls.add(productUrl)) {
+                            logger.info("Adding product URL to the queue: " + productUrl);
+                            urlQueue.put(productUrl);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Error during scraping", e);
+            } finally {
+                driver.quit();
+            }
+            page++;
         }
     }
 
@@ -163,14 +192,13 @@ public class WebScraper<T> implements CommandLineRunner {
         return USER_AGENTS.get(index);
     }
 
-    // Method to extract brand from URL
     private String getBrandFromUrl(String productUrl) {
         if (productUrl.contains("amd")) {
             return "amd";
         } else if (productUrl.contains("intel")) {
             return "intel";
         } else {
-            return ""; // Handle other cases
+            return "";
         }
     }
 }
