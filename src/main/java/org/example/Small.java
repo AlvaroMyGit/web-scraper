@@ -1,5 +1,6 @@
 package org.example;
 
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -12,8 +13,11 @@ public class Small {
         String url = "https://www.newegg.com/Processors-Desktops/SubCategory/ID-343";
 
         try {
-            // Send HTTP GET request
-            Document doc = Jsoup.connect(url).get();
+            // Send HTTP GET request with a user-agent header
+            Connection connection = Jsoup.connect(url)
+                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+            Document doc = connection.get();
+            System.out.println(doc);
 
             // Extract CPU elements
             Elements cpuElements = doc.select(".item-container");
@@ -31,6 +35,7 @@ public class Small {
                 System.out.println("Price: " + price);
                 System.out.println("Specifications: " + specifications);
                 System.out.println("Product URL: " + productUrl);
+                System.out.println();
             }
         } catch (IOException e) {
             e.printStackTrace();

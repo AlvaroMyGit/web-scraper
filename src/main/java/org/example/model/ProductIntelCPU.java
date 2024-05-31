@@ -54,6 +54,10 @@ public class ProductIntelCPU implements Product{
     private String advancedTechnologies;
     private String securityAndReliability;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
+
     public ProductIntelCPU () {};
     public ProductIntelCPU(String brand, String processorsType, String series, String name, String model, String cpuSocketType, String coreName, Integer numberOfCores, Integer numberOfThreads, Double operatingFrequencyPerformanceCoreBase, Double operatingFrequencyEfficientCoreBase, Double maxTurboFrequencyTurboBoostMaxTechnology, Double maxTurboFrequencyPCore, Double maxTurboFrequencyECore, String l2Cache, String l3Cache, String manufacturingTech, String support64Bit, String hyperThreadingSupport, String memoryTypes, Integer memoryChannel, Integer maxMemorySize, String eccMemorySupported, Double maxMemoryBandwidth, String virtualizationTechnologySupport, String integratedGraphics, Integer graphicsBaseFrequency, Integer graphicsMaxDynamicFrequency, String scalability, String pciExpressRevision, String pciExpressConfigurations, String maxNumberOfPciExpressLanes, Integer thermalDesignPower, Integer maxTurboPower, String coolingDevice, String compatibleDesktopChipsets, String operatingSystemSupported, String advancedTechnologies, String securityAndReliability) {
         this.brand = brand;
@@ -444,5 +448,11 @@ public class ProductIntelCPU implements Product{
         this.maxTurboFrequencyECore = maxTurboFrequencyECore;
     }
 
+    public Category getCategory() {
+        return category;
+    }
 
+    public void setCategory(Category category) {
+        this.category = category;
+    }
 }

@@ -4,16 +4,13 @@ import org.example.model.Category;
 import org.example.model.ProductRyzenCPU;
 import org.example.repository.CategoryRepository;
 import org.example.repository.RyzenProductRepository;
-import org.openqa.selenium.*;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -23,7 +20,6 @@ public class RyzenProductScraper implements ProductScraper<ProductRyzenCPU> {
     private static final Logger logger = Logger.getLogger(RyzenProductScraper.class.getName());
     private String productUrl;
     private final RyzenProductRepository productRepository;
-
     private final CategoryRepository categoryRepository;
 
     public RyzenProductScraper(RyzenProductRepository productRepository, CategoryRepository categoryRepository) {
@@ -33,191 +29,170 @@ public class RyzenProductScraper implements ProductScraper<ProductRyzenCPU> {
 
     @Override
     public ProductRyzenCPU call() {
-        ChromeOptions options = new ChromeOptions();
-        //options.addArguments("--headless");
-
-        WebDriver driver = new ChromeDriver(options);
-
         try {
-            driver.get(productUrl);
-            logger.info("Navigated to product URL: " + productUrl);
+            Document doc = Jsoup.connect(productUrl).get();
+            logger.info("Connected to product URL: " + productUrl);
 
-            ((JavascriptExecutor) driver).executeScript("window.scrollTo(0, document.body.scrollHeight)");
-            Thread.sleep(4000);
-            logger.info("Waited for stability after scrolling");
+            Element specsTabPane = doc.getElementById("product-details");
+            if (specsTabPane != null) {
+                Element specsTable = specsTabPane.select("div.tab-pane").get(1);
+                if (specsTable != null) {
+                    String brand = getValueByLabel(specsTable, "Brand");
+                    logger.info("Brand: " + brand);
 
-            // Use WebDriverWait to wait for the element to be present
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-            WebElement productDetails = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"product-details\"]")));
+                    String processorsType = getValueByLabel(specsTable, "Processors Type");
+                    logger.info("Processor Type: " + processorsType);
 
-            ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", productDetails);
-            Thread.sleep(1000);
+                    String series = getValueByLabel(specsTable, "Series");
+                    logger.info("Series: " + series);
 
-            WebElement elementToClick = productDetails.findElement(By.xpath("//*[@id=\"product-details\"]/div[1]/div[2]"));
-            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", elementToClick);
-            Thread.sleep(2000);
-            logger.info("Clicked 'Specs' tab");
+                    String name = getValueByLabel(specsTable, "Name");
+                    logger.info("Name: " + name);
 
+                    BigDecimal price = parseBigDecimal(doc, "#app > div:nth-child(3) > div > div > div > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > ul > li:nth-child(3)");
+                    logger.info("Price: " + price);
 
-            String brand = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[2]/tbody/tr[1]/td");
-            logger.info("Brand: " + brand);
+                    String model = getValueByLabel(specsTable, "Model");
+                    logger.info("Model: " + model);
 
-            String processorsType = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[2]/tbody/tr[2]/td");
-            logger.info("Processor Type: " + processorsType);
+                    String cpuSocketType = getValueByLabel(specsTable, "CPU Socket Type");
+                    logger.info("Socket: " + cpuSocketType);
 
-            String series = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[2]/tbody/tr[3]/td");
-            logger.info("Series: " + series);
+                    int numberOfCores = parseInt(specsTable, "# of Cores");
+                    logger.info("Number of Cores: " + numberOfCores);
 
-            String name = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[2]/tbody/tr[4]/td");
-            logger.info("Name: " + name);
+                    int numberOfThreads = parseInt(specsTable, "# of Threads");
+                    logger.info("Number of Threads: " + numberOfThreads);
 
-            BigDecimal price = parseBigDecimal(driver, "//*[@id=\"app\"]/div[3]/div/div/div/div[1]/div[1]/div[1]/div[1]/ul/li[3]");
-            logger.info("Price: " + price);
+                    double operatingFrequency = parseDouble(specsTable, "Operating Frequency");
+                    logger.info("Operating Frequency: " + operatingFrequency);
 
-            String model = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[2]/tbody/tr[5]/td");
-            logger.info("Model: " + model);
+                    double maxTurboFrequency = parseDouble(specsTable, "Max Turbo Frequency");
+                    logger.info("Max Turbo Frequency: " + maxTurboFrequency);
 
-            String cpuSocketType = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[1]/td");
-            logger.info("Socket: " + cpuSocketType);
+                    String l1Cache = getValueByLabel(specsTable, "L1 Cache");
+                    logger.info("L1 Cache: " + l1Cache);
 
-            int numberOfCores = parseInt(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[2]/td");
-            logger.info("Number of Cores: " + numberOfCores);
+                    String l2Cache = getValueByLabel(specsTable, "L2 Cache");
+                    logger.info("L2 Cache: " + l2Cache);
 
-            int numberOfThreads = parseInt(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[3]/td");
-            logger.info("Number of Threads: " + numberOfThreads);
+                    String l3Cache = getValueByLabel(specsTable, "L3 Cache");
+                    logger.info("L3 Cache: " + l3Cache);
 
-            double operatingFrequency = parseDouble(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[4]/td");
-            logger.info("Operating Frequency: " + operatingFrequency);
+                    String manufacturingTech = getValueByLabel(specsTable, "Manufacturing Tech");
+                    logger.info("Manufacturing Tech: " + manufacturingTech);
 
-            double maxTurboFrequency = parseDouble(driver, "/html/body/div[36]/div[3]/div/div/div/div[2]/div[2]/div/div[1]/div[6]/div[2]/div[2]/table[3]/tbody/tr[5]/td");
-            logger.info("Max Turbo Frequency: " + maxTurboFrequency);
+                    String support64Bit = getValueByLabel(specsTable, "64-Bit Support");
+                    logger.info("64 Bit Support: " + support64Bit);
 
-            String l1Cache = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[6]/td");
-            logger.info("L1 Cache: " + l1Cache);
+                    String memoryTypes = getValueByLabel(specsTable, "Memory Types");
+                    logger.info("Memory Types: " + memoryTypes);
 
-            String l2Cache = extractText(driver, "/html/body/div[36]/div[3]/div/div/div/div[2]/div[2]/div/div[1]/div[6]/div[2]/div[2]/table[3]/tbody/tr[7]/td");
-            logger.info("L2 Cache: " + l2Cache);
+                    int memoryChannel = parseInt(specsTable, "Memory Channel");
+                    logger.info("Memory Channel: " + memoryChannel);
 
-            String l3Cache = extractText(driver, "/html/body/div[36]/div[3]/div/div/div/div[2]/div[2]/div/div[1]/div[6]/div[2]/div[2]/table[3]/tbody/tr[8]/td");
-            logger.info("L3 Cache: " + l3Cache);
+                    String isEccMemorySupported = getValueByLabel(specsTable, "ECC Memory");
+                    logger.info("Is ECC Memory Supported: " + isEccMemorySupported);
 
-            String manufacturingTech = extractText(driver, "/html/body/div[36]/div[3]/div/div/div/div[2]/div[2]/div/div[1]/div[6]/div[2]/div[2]/table[3]/tbody/tr[9]/td");
-            logger.info("Manufacturing Tech: " + manufacturingTech);
+                    String integratedGraphics = getValueByLabel(specsTable, "Integrated Graphics");
+                    logger.info("Integrated Graphics: " + integratedGraphics);
 
-            String support64Bit = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[10]/td");
-            logger.info("64 Bit Support: " + support64Bit);
+                    int graphicsBaseFrequency = parseInt(specsTable, "Graphics Base Frequency");
+                    logger.info("Graphics Base Frequency: " + graphicsBaseFrequency);
 
-            String memoryTypes = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[11]/td");
-            logger.info("Memory Types: " + memoryTypes);
+                    int graphicsMaxBaseFrequency = parseInt(specsTable, "Graphics Max Dynamic Frequency");
+                    logger.info("Graphics Max Base Frequency: " + graphicsMaxBaseFrequency);
 
-            Thread.sleep(3000);
+                    String pciExpressRevision = getValueByLabel(specsTable, "PCI Express Revision");
+                    logger.info("PCI Express Revision: " + pciExpressRevision);
 
-            int memoryChannel = parseInt(driver, "/html/body/div[36]/div[3]/div/div/div/div[2]/div[2]/div/div[1]/div[6]/div[2]/div[2]/table[3]/tbody/tr[12]/td");
-            logger.info("Memory Channel: " + memoryChannel);
+                    int thermalDesignPower = parseInt(specsTable, "Thermal Design Power");
+                    logger.info("Thermal Design Power: " + thermalDesignPower);
 
-            String isEccMemorySupported = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[13]/td");
-            logger.info("Is ECC Memory Supported: " + isEccMemorySupported);
+                    String coolingDevice = getValueByLabel(specsTable, "Cooling Device");
+                    logger.info("Cooling Device: " + coolingDevice);
 
-            String integratedGraphics = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[14]/td");
-            logger.info("Integrated Graphics: " + integratedGraphics);
+                    String operatingSystemSupported = getValueByLabel(specsTable, "Operating System Supported");
+                    logger.info("Operating System Supported: " + operatingSystemSupported);
 
-            int graphicsBaseFrequency = parseInt(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[15]/td");
-            logger.info("Graphics Base Frequency: " + graphicsBaseFrequency);
+                    ProductRyzenCPU product = new ProductRyzenCPU();
+                    Category cpuCategory = categoryRepository.findByName("CPU");
+                    product.setBrand(brand);
+                    product.setProcessorsType(processorsType);
+                    product.setSeries(series);
+                    product.setName(name);
+                    product.setPrice(price);
+                    product.setModel(model);
+                    product.setCpuSocketType(cpuSocketType);
+                    product.setNumberOfCores(numberOfCores);
+                    product.setNumberOfThreads(numberOfThreads);
+                    product.setOperatingFrequency(operatingFrequency);
+                    product.setMaxTurboFrequency(maxTurboFrequency);
+                    product.setL1Cache(l1Cache);
+                    product.setL2Cache(l2Cache);
+                    product.setL3Cache(l3Cache);
+                    product.setManufacturingTech(manufacturingTech);
+                    product.setSupport64Bit(support64Bit);
+                    product.setMemoryTypes(memoryTypes);
+                    product.setMemoryChannel(memoryChannel);
+                    product.setIsEccMemorySupported(isEccMemorySupported);
+                    product.setIntegratedGraphics(integratedGraphics);
+                    product.setGraphicsBaseFrequency(graphicsBaseFrequency);
+                    product.setGraphicsMaxBaseFrequency(graphicsMaxBaseFrequency);
+                    product.setPciExpressRevision(pciExpressRevision);
+                    product.setThermalDesignPower(thermalDesignPower);
+                    product.setCoolingDevice(coolingDevice);
+                    product.setOperatingSystemSupported(operatingSystemSupported);
+                    product.setCategory(cpuCategory);
 
-            int graphicsMaxBaseFrequency = parseInt(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[16]/td");
-            logger.info("Graphics Max Base Frequency: " + graphicsMaxBaseFrequency);
+                    saveProduct(product);
 
-            String pciExpressRevision = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[17]/td");
-            logger.info("PCI Express Revision: " + pciExpressRevision);
+                    logger.info("Product saved successfully");
 
-            int thermalDesignPower = parseInt(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[18]/td");
-            logger.info("Thermal Design Power: " + thermalDesignPower);
-
-            String coolingDevice = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[19]/td");
-            logger.info("Cooling Device: " + coolingDevice);
-
-            String operatingSystemSupported = extractText(driver, "//*[@id=\"product-details\"]/div[2]/div[2]/table[3]/tbody/tr[20]/td");
-            logger.info("Operating System Supported: " + operatingSystemSupported);
-
-            ProductRyzenCPU product = new ProductRyzenCPU();
-            Category cpuCategory = categoryRepository.findByName("CPU");
-            product.setBrand(brand);
-            product.setProcessorsType(processorsType);
-            product.setSeries(series);
-            product.setName(name);
-            product.setPrice(price);
-            product.setModel(model);
-            product.setCpuSocketType(cpuSocketType);
-            product.setNumberOfCores(numberOfCores);
-            product.setNumberOfThreads(numberOfThreads);
-            product.setOperatingFrequency(operatingFrequency);
-            product.setMaxTurboFrequency(maxTurboFrequency);
-            product.setL1Cache(l1Cache);
-            product.setL2Cache(l2Cache);
-            product.setL3Cache(l3Cache);
-            product.setManufacturingTech(manufacturingTech);
-            product.setSupport64Bit(support64Bit);
-            product.setMemoryTypes(memoryTypes);
-            product.setMemoryChannel(memoryChannel);
-            product.setIsEccMemorySupported(isEccMemorySupported);
-            product.setIntegratedGraphics(integratedGraphics);
-            product.setGraphicsBaseFrequency(graphicsBaseFrequency);
-            product.setGraphicsMaxBaseFrequency(graphicsMaxBaseFrequency);
-            product.setPciExpressRevision(pciExpressRevision);
-            product.setThermalDesignPower(thermalDesignPower);
-            product.setCoolingDevice(coolingDevice);
-            product.setOperatingSystemSupported(operatingSystemSupported);
-            product.setCategory(cpuCategory);
-
-            saveProduct(product);
-
-            logger.info("Product saved successfully");
-
-            return product;
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error scraping or saving product data from URL: " + productUrl, e);
-            return null;
-        } finally {
-            driver.quit();
-            logger.info("Driver quit");
+                    return product;
+                } else {
+                    logger.warning("No specifications table found.");
+                }
+            } else {
+                logger.warning("No specs tab pane found.");
+            }
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Error connecting to product URL: " + productUrl, e);
         }
+
+        return null;
     }
 
-    private String extractText(WebDriver driver, String xpath) {
-        try {
-            return driver.findElement(By.xpath(xpath)).getText();
-        } catch (Exception e) {
-            logger.log(Level.WARNING, "Failed to extract text for xpath: " + xpath, e);
-            return "";
-        }
+    private String getValueByLabel(Element table, String label) {
+        return table.select("tr:has(th:contains(" + label + ")) td").text();
     }
 
-    private BigDecimal parseBigDecimal(WebDriver driver, String xpath) {
+    private BigDecimal parseBigDecimal(Document doc, String selector) {
         try {
-            String text = driver.findElement(By.xpath(xpath)).getText().replaceAll("[^\\d.]", "");
+            String text = doc.select(selector).text().replaceAll("[^\\d.]", "");
             return text.isEmpty() ? BigDecimal.ZERO : new BigDecimal(text);
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Failed to parse BigDecimal for xpath: " + xpath, e);
+            logger.log(Level.WARNING, "Failed to parse BigDecimal for selector: " + selector, e);
             return BigDecimal.ZERO;
         }
     }
 
-    private int parseInt(WebDriver driver, String xpath) {
+    private int parseInt(Element table, String label) {
         try {
-            String text = driver.findElement(By.xpath(xpath)).getText().replaceAll("\\D", "");
+            String text = getValueByLabel(table, label).replaceAll("\\D", "");
             return text.isEmpty() ? 0 : Integer.parseInt(text);
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Failed to parse int for xpath: " + xpath, e);
+            logger.log(Level.WARNING, "Failed to parse int for label: " + label, e);
             return 0;
         }
     }
 
-    private double parseDouble(WebDriver driver, String xpath) {
+    private double parseDouble(Element table, String label) {
         try {
-            String text = driver.findElement(By.xpath(xpath)).getText().replaceAll("[^\\d.]", "");
+            String text = getValueByLabel(table, label).replaceAll("[^\\d.]", "");
             return text.isEmpty() ? 0.0 : Double.parseDouble(text);
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Failed to parse double for xpath: " + xpath, e);
+            logger.log(Level.WARNING, "Failed to parse double for label: " + label, e);
             return 0.0;
         }
     }
@@ -248,5 +223,4 @@ public class RyzenProductScraper implements ProductScraper<ProductRyzenCPU> {
     public void setProductUrl(String productUrl) {
         this.productUrl = productUrl;
     }
-
 }
