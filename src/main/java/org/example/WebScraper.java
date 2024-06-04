@@ -59,9 +59,6 @@ public class WebScraper<T> implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-        System.setProperty("webdriver.chrome.logfile", "C:\\Users\\Álvaro\\Documents\\chromedriver.log");
-        System.setProperty("webdriver.chrome.verboseLogging", "true");
-
         WebDriverManager.chromedriver().setup();
 
         ExecutorService scrapingExecutor = Executors.newSingleThreadExecutor();
