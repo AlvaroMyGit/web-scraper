@@ -1,17 +1,21 @@
 package scrapy.newegg.model;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "category")
 public class ProductCategory implements Category {
 
-    private Long Id;
-
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     private String name;
-
     private String description;
 
 
     @Override
     public Long getId() {
-        return Id;
+        return id;
     }
 
     @Override

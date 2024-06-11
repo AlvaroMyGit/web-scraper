@@ -2,11 +2,9 @@ package scrapy.newegg.scraper;
 
 import org.springframework.boot.CommandLineRunner;
 
-import java.util.List;
-
 public interface ProductUrlScraper extends CommandLineRunner {
-    void run();
+    void run(String... args);
     void fetchProductUrls();
     String getRandomUserAgent();
-    String getBrandFromUrl();
+    String getBrandFromUrl(String productUrl);
 }
