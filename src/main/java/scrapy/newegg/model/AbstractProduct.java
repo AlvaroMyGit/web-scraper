@@ -16,6 +16,10 @@ public abstract class AbstractProduct implements Product {
     }
 
     @Override
+    public void setId(Long id) {
+        this.id = id;
+    }
+    @Override
     public String getBrand() {
         return brand;
     }

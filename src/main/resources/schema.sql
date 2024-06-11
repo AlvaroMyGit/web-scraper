@@ -4,7 +4,7 @@ CREATE TABLE category (
     description TEXT
 );
 
-CREATE TABLE ryzen_cpu (
+CREATE TABLE amd_cpu (
     id SERIAL PRIMARY KEY,
     brand VARCHAR(255) NOT NULL,
     processors_type VARCHAR(255),
@@ -110,6 +110,15 @@ CREATE TABLE intel_cpu (
         thermal_design_power > 0 AND
         max_turbo_power > 0
     )
+);
+
+CREATE TABLE product_photo (
+    id SERIAL PRIMARY KEY,
+    url VARCHAR(255) NOT NULL,  -- or you can store the image binary data if needed
+    product_id INTEGER NOT NULL,
+    CONSTRAINT fk_product
+        FOREIGN KEY (product_id)
+        REFERENCES product_cpu(id) ON DELETE CASCADE
 );
 
 CREATE TABLE compatibility (

@@ -1,10 +1,12 @@
 package scrapy.newegg.model;
 
 import java.math.BigDecimal;
+import java.util.Set;
 
 public interface Product {
 
     Long getId();
+    void setId(Long id);
 
     String getName();
     void setName(String name);

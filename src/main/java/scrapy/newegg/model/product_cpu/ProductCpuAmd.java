@@ -1,16 +1,20 @@
 package scrapy.newegg.model.product_cpu;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import scrapy.newegg.model.AbstractProduct;
 
 import jakarta.persistence.*;
 import scrapy.newegg.model.Category;
+import scrapy.newegg.parser.DefaultValueParser;
+import scrapy.newegg.repository.CategoryRepository;
 
 import java.math.BigDecimal;
+import java.util.logging.Logger;
 
 
 @Entity
-@Table (name = "ryzen_cpu")
-public class ProductCpuAmd extends AbstractProduct {
+@Table (name = "amd_cpu")
+public class ProductCpuAmd extends AbstractProduct implements ProductCpu {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,8 +54,21 @@ public class ProductCpuAmd extends AbstractProduct {
 
     // Add other fields as needed
 
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    private static final Logger logger = Logger.getLogger(ProductCpuAmd.class.getName());
+
     // Constructor
     public ProductCpuAmd() {
+        // Fetch the "CPU" category from the database
+        this.category = categoryRepository.findByName("CPU");
+        if (this.category == null) {
+            // Log an error and throw an exception if the "CPU" category is not found
+            String errorMessage = "CPU category not found in the database";
+            logger.warning(errorMessage);
+            throw new RuntimeException(errorMessage);
+        }
     }
 
     @Override
@@ -135,18 +152,20 @@ public class ProductCpuAmd extends AbstractProduct {
         this.cpuSocketType = cpuSocketType;
     }
 
+    @Override
     public int getNumberOfCores() {
         return numberOfCores;
     }
-
+    @Override
     public void setNumberOfCores(int numberOfCores) {
         this.numberOfCores = numberOfCores;
     }
 
+    @Override
     public int getNumberOfThreads() {
         return numberOfThreads;
     }
-
+    @Override
     public void setNumberOfThreads(int numberOfThreads) {
         this.numberOfThreads = numberOfThreads;
     }

@@ -2,6 +2,8 @@ package scrapy.newegg.model;
 
 import jakarta.persistence.*;
 
+import java.util.Set;
+
 @Entity
 @Table(name = "category")
 public class ProductCategory implements Category {
@@ -12,12 +14,14 @@ public class ProductCategory implements Category {
     private String name;
     private String description;
 
-
     @Override
     public Long getId() {
         return id;
     }
-
+    @Override
+    public void setId(Long id) {
+        this.id = id;
+    }
     @Override
     public String getName() {
         return name;
