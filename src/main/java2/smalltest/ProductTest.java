@@ -1,4 +1,4 @@
-package Divergent;
+package java2.smalltest;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;

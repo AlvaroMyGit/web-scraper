@@ -15,7 +15,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Component
-public class IntelProductScraper implements ProductScraper<ProductIntelCPU> {
+public class IntelProductScraper implements org.example.scraping.ProductScraper<ProductIntelCPU> {
 
     private static final Logger logger = Logger.getLogger(IntelProductScraper.class.getName());
     private String productUrl;
