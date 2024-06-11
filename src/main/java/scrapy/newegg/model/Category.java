@@ -3,5 +3,7 @@ package scrapy.newegg.model;
 public interface Category {
     Long getId();
     String getName();
-    String getDescription();
+    void setName();
+    String getDescription(String name);
+    void setDescription(String description);
 }
