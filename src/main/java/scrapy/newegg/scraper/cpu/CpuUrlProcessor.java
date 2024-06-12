@@ -3,11 +3,9 @@ package scrapy.newegg.scraper.cpu;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import scrapy.newegg.factory.product.cpu.ProductCpuFactoryProvider;
+import scrapy.newegg.factory.scraper.cpu.ProductCpuScraperFactoryProvider;
 import scrapy.newegg.model.cpu.ProductCpu;
-import scrapy.newegg.model.cpu.ProductCpuAmd;
-import scrapy.newegg.model.cpu.ProductCpuIntel;
-import scrapy.newegg.repository.category.cpu.ProductCpuAmdRepository;
-import scrapy.newegg.repository.category.cpu.ProductCpuIntelRepository;
+import scrapy.newegg.scraper.ProductScraper;
 import scrapy.newegg.scraper.ProductUrlProcessor;
 
 import java.util.concurrent.BlockingQueue;
@@ -25,13 +23,7 @@ public class CpuUrlProcessor implements ProductUrlProcessor {
     private BlockingQueue<String> urlQueue;
 
     @Autowired
-    private ProductCpuFactoryProvider productCpuFactoryProvider;
-
-    @Autowired
-    private ProductCpuAmdRepository productCpuAmdRepository;
-
-    @Autowired
-    private ProductCpuIntelRepository productCpuIntelRepository;
+    private ProductCpuScraperFactoryProvider productCpuScraperFactoryProvider;
 
     private final ExecutorService scrapingExecutor = Executors.newSingleThreadExecutor();
 
@@ -57,10 +49,10 @@ public class CpuUrlProcessor implements ProductUrlProcessor {
         try {
             ProductCpu product = createProductFromUrl(productUrl, brand);
             if (product != null) {
-                saveProduct(product);
+                // Do not save the product here
             }
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error scraping or saving product data from URL: " + productUrl, e);
+            logger.log(Level.SEVERE, "Error scraping product data from URL: " + productUrl, e);
         }
     }
 
@@ -75,15 +67,32 @@ public class CpuUrlProcessor implements ProductUrlProcessor {
     }
 
     public ProductCpu createProductFromUrl(String productUrl, String brand) {
-        String categoryName = brand.equalsIgnoreCase("amd") ? "CPU_AMD" : "CPU_INTEL";
-        return productCpuFactoryProvider.createProductCpu(categoryName);
-    }
-
-    public void saveProduct(ProductCpu product) {
-        if (product instanceof ProductCpuAmd) {
-            productCpuAmdRepository.save((ProductCpuAmd) product);
-        } else if (product instanceof ProductCpuIntel) {
-            productCpuIntelRepository.save((ProductCpuIntel) product);
+        ProductCpu product = null;
+        if ("amd".equalsIgnoreCase(brand)) {
+            ProductScraper<?> scraper = productCpuScraperFactoryProvider.getScraper("CPU_AMD");
+            if (scraper != null) {
+                try {
+                    product = (ProductCpu) scraper.call();
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, "Error scraping product data for AMD CPU", e);
+                }
+            } else {
+                logger.warning("No scraper available for AMD CPUs");
+            }
+        } else if ("intel".equalsIgnoreCase(brand)) {
+            ProductScraper<?> scraper = productCpuScraperFactoryProvider.getScraper("CPU_INTEL");
+            if (scraper != null) {
+                try {
+                    product = (ProductCpu) scraper.call();
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, "Error scraping product data for Intel CPU", e);
+                }
+            } else {
+                logger.warning("No scraper available for Intel CPUs");
+            }
+        } else {
+            logger.warning("Unknown CPU brand");
         }
+        return product;
     }
 }

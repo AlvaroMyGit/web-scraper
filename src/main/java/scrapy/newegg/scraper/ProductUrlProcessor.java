@@ -8,5 +8,5 @@ public interface ProductUrlProcessor {
     void processNextProductUrl();
     String getBrandFromUrl(String productUrl);
     ProductCpu createProductFromUrl(String productUrl, String brand);
-    void saveProduct(ProductCpu product);
+
 }
