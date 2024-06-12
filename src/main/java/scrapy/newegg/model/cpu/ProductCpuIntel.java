@@ -1,4 +1,4 @@
-package scrapy.newegg.model.product_cpu;
+package scrapy.newegg.model.cpu;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import scrapy.newegg.model.AbstractProduct;
@@ -8,7 +8,6 @@ import scrapy.newegg.model.Category;
 import scrapy.newegg.repository.CategoryRepository;
 
 import java.math.BigDecimal;
-import java.util.logging.Logger;
 
 @Entity
 @Table(name = "intel_cpu")

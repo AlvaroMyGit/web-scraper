@@ -3,7 +3,7 @@ package scrapy.newegg.factory.product.cpu;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import scrapy.newegg.model.Category;
-import scrapy.newegg.model.product_cpu.ProductCpu;
+import scrapy.newegg.model.cpu.ProductCpu;
 import scrapy.newegg.repository.CategoryRepository;
 
 import java.util.HashMap;

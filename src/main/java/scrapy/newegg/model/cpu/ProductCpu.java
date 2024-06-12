@@ -1,4 +1,4 @@
-package scrapy.newegg.model.product_cpu;
+package scrapy.newegg.model.cpu;
 
 import scrapy.newegg.model.Product;
 

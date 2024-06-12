@@ -1,6 +1,6 @@
 package scrapy.newegg.scraper;
 
-import scrapy.newegg.model.product_cpu.ProductCpu;
+import scrapy.newegg.model.cpu.ProductCpu;
 
 public interface ProductUrlProcessor {
 
