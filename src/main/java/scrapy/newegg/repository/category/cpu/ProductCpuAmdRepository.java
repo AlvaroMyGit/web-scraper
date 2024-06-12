@@ -7,5 +7,5 @@ import scrapy.newegg.model.cpu.ProductCpuAmd;
 
 
 @Repository
-public interface ProductCpuAmdRepository extends JpaRepository<ProductCpu, Long> {
+public interface ProductCpuAmdRepository extends JpaRepository<ProductCpuAmd, Long> {
 }

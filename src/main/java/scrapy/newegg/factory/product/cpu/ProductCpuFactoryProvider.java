@@ -3,6 +3,7 @@ package scrapy.newegg.factory.product.cpu;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import scrapy.newegg.model.Category;
+import scrapy.newegg.model.ProductCategory;
 import scrapy.newegg.model.cpu.ProductCpu;
 import scrapy.newegg.repository.CategoryRepository;
 
@@ -26,7 +27,7 @@ public class ProductCpuFactoryProvider {
     }
 
     public ProductCpu createProductCpu(String categoryName) {
-        Category category = categoryRepository.findByName(categoryName);
+        ProductCategory category = categoryRepository.findByName(categoryName);
         if (category == null) {
             String errorMessage = "Category not found in the database: " + categoryName;
             logger.warning(errorMessage);

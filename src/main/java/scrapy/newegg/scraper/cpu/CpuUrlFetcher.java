@@ -1,22 +1,15 @@
 package scrapy.newegg.scraper.cpu;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
+
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import scrapy.newegg.scraper.ProductUrlFetcher;
-
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;

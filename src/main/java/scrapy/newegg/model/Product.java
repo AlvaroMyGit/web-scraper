@@ -16,6 +16,6 @@ public interface Product {
     BigDecimal getPrice();
     void setPrice(BigDecimal price);
 
-    Category getCategory();
-    void setCategory(Category category);
+    ProductCategory getCategory();
+    void setCategory(ProductCategory category);
 }

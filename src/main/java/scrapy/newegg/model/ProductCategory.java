@@ -1,8 +1,6 @@
 package scrapy.newegg.model;
 
-import jakarta.persistence.*;
-
-import java.util.Set;
+import javax.persistence.*;
 
 @Entity
 @Table(name = "category")

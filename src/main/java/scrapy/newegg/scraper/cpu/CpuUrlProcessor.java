@@ -2,12 +2,10 @@ package scrapy.newegg.scraper.cpu;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import scrapy.newegg.factory.product.cpu.ProductCpuFactoryProvider;
 import scrapy.newegg.factory.scraper.cpu.ProductCpuScraperFactoryProvider;
 import scrapy.newegg.model.cpu.ProductCpu;
 import scrapy.newegg.scraper.ProductScraper;
 import scrapy.newegg.scraper.ProductUrlProcessor;
-
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -67,12 +65,11 @@ public class CpuUrlProcessor implements ProductUrlProcessor {
     }
 
     public ProductCpu createProductFromUrl(String productUrl, String brand) {
-        ProductCpu product = null;
         if ("amd".equalsIgnoreCase(brand)) {
             ProductScraper<?> scraper = productCpuScraperFactoryProvider.getScraper("CPU_AMD");
             if (scraper != null) {
                 try {
-                    product = (ProductCpu) scraper.call();
+                    scraper.call();
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Error scraping product data for AMD CPU", e);
                 }
@@ -83,7 +80,7 @@ public class CpuUrlProcessor implements ProductUrlProcessor {
             ProductScraper<?> scraper = productCpuScraperFactoryProvider.getScraper("CPU_INTEL");
             if (scraper != null) {
                 try {
-                    product = (ProductCpu) scraper.call();
+                    scraper.call();
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Error scraping product data for Intel CPU", e);
                 }
@@ -93,6 +90,6 @@ public class CpuUrlProcessor implements ProductUrlProcessor {
         } else {
             logger.warning("Unknown CPU brand");
         }
-        return product;
+        return null; // Since the scraper handles the product directly
     }
 }

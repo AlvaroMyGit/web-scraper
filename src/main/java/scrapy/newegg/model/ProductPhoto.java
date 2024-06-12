@@ -1,6 +1,6 @@
 package scrapy.newegg.model;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 
 @Entity
 @Table(name = "product_photo")

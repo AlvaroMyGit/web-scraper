@@ -2,25 +2,20 @@ package scrapy.newegg.model.cpu;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import scrapy.newegg.model.AbstractProduct;
-
-import jakarta.persistence.*;
-import scrapy.newegg.model.Category;
+import scrapy.newegg.model.ProductCategory;
 import scrapy.newegg.repository.CategoryRepository;
-
+import javax.persistence.*;
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "intel_cpu")
 public class ProductCpuIntel extends AbstractProduct implements ProductCpu{
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     private String name;
     private String brand;
     private BigDecimal price;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
-    private Category category;
+    private ProductCategory category;
     private String processorsType;
     private String series;
     private String model;
@@ -60,22 +55,10 @@ public class ProductCpuIntel extends AbstractProduct implements ProductCpu{
     private String securityAndReliability;
 
     // Add other fields as needed
-
-    @Autowired
-    private CategoryRepository categoryRepository;
     public ProductCpuIntel () {}
 
-    public ProductCpuIntel(Category category) {
+    public ProductCpuIntel(ProductCategory category) {
         this.category = category;
-    }
-    @Override
-    public Long getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(Long id) {
-        this.id = id;
     }
 
     @Override
@@ -109,12 +92,12 @@ public class ProductCpuIntel extends AbstractProduct implements ProductCpu{
     }
 
     @Override
-    public Category getCategory() {
+    public ProductCategory getCategory() {
         return category;
     }
 
     @Override
-    public void setCategory(Category category) {
+    public void setCategory(ProductCategory category) {
         this.category = category;
     }
 

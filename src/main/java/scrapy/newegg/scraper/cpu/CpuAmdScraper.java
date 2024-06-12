@@ -1,13 +1,11 @@
 package scrapy.newegg.scraper.cpu;
 
-import org.checkerframework.checker.units.qual.C;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import scrapy.newegg.model.Product;
-import scrapy.newegg.model.cpu.ProductCpu;
+import scrapy.newegg.config.ScrapingResult;
 import scrapy.newegg.model.cpu.ProductCpuAmd;
 import scrapy.newegg.parser.DefaultValueParser;
 import scrapy.newegg.repository.category.cpu.ProductCpuAmdRepository;
@@ -19,7 +17,7 @@ import java.util.logging.Logger;
 
 
 @Component
-public class CpuAmdScraper implements ProductScraper<ProductCpu> {
+public class CpuAmdScraper implements ProductScraper<ProductCpuAmd> {
     private static final Logger logger = Logger.getLogger(CpuAmdScraper.class.getName());
 
     @Autowired
@@ -31,7 +29,7 @@ public class CpuAmdScraper implements ProductScraper<ProductCpu> {
     private String productUrl;
 
     @Override
-    public ProductCpu call() {
+    public ScrapingResult<ProductCpuAmd> call() {
         try {
             Element specsTabPane = getSpecsTabPane();
             if (specsTabPane != null) {
@@ -65,17 +63,20 @@ public class CpuAmdScraper implements ProductScraper<ProductCpu> {
                     product.setCoolingDevice(valueParser.parseString(specsTable, "Cooling Device"));
                     product.setOperatingSystemSupported(valueParser.parseString(specsTable, "Operating System Supported"));
 
-                    return product;
+                    saveProduct(product);
+                    return ScrapingResult.SUCCESS; // Return success indicator
                 } else {
                     logger.warning("No specifications table found.");
+                    return ScrapingResult.NO_SPECIFICATIONS_TABLE;
                 }
             } else {
                 logger.warning("No specs tab pane found.");
+                return ScrapingResult.NO_SPECS_TAB_PANE;
             }
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error scraping product details from URL: " + productUrl, e);
+            return ScrapingResult.ERROR;
         }
-        return null;
     }
 
     @Override
@@ -105,7 +106,7 @@ public class CpuAmdScraper implements ProductScraper<ProductCpu> {
 
 
     @Override
-    public void saveProduct(ProductCpu product) {
+    public void saveProduct(ProductCpuAmd product) {
         productCpuAmdRepository.save(product);
     }
 }

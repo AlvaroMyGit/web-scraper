@@ -112,6 +112,11 @@ CREATE TABLE intel_cpu (
     )
 );
 
+CREATE TABLE product_cpu (
+    id SERIAL PRIMARY KEY
+    -- Add columns specific to product_cpu here
+);
+
 CREATE TABLE product_photo (
     id SERIAL PRIMARY KEY,
     url VARCHAR(255) NOT NULL,  -- or you can store the image binary data if needed
@@ -127,5 +132,3 @@ CREATE TABLE compatibility (
     category2_id INTEGER REFERENCES category(id),
     compatibility_rule TEXT NOT NULL -- JSON or text describing the compatibility rule
 );
-
-INSERT INTO category (name, description) VALUES ('CPU', 'Central Processing Units');

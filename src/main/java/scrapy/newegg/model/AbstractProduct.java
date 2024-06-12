@@ -1,14 +1,27 @@
 package scrapy.newegg.model;
 
+import javax.persistence.*;
+
+
 import java.math.BigDecimal;
 
+
+
+@Entity
+@Inheritance(strategy = InheritanceType.JOINED)
 public abstract class AbstractProduct implements Product {
 
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String brand;
     private String name;
     private BigDecimal price;
-    private Category category;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private ProductCategory category;
 
     @Override
     public Long getId() {
@@ -50,12 +63,12 @@ public abstract class AbstractProduct implements Product {
     }
 
     @Override
-    public Category getCategory() {
+    public ProductCategory getCategory() {
         return category;
     }
 
     @Override
-    public void setCategory(Category category) {
+    public void setCategory(ProductCategory category) {
         this.category = category;
     }
 
