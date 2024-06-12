@@ -1,6 +1,7 @@
 package scrapy.newegg.parser;
 
 import org.jsoup.nodes.Element;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -12,6 +13,10 @@ import java.util.logging.Logger;
 public class DefaultValueParser implements ValueParser {
 
     private static final Logger logger = Logger.getLogger(DefaultValueParser.class.getName());
+
+    public DefaultValueParser() {
+        logger.info("Creating DefaultValueParser bean...");
+    }
 
     @Override
     public String parseString(Element element, String label) {

@@ -1,13 +1,18 @@
 package scrapy.newegg.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import scrapy.newegg.parser.DefaultValueParser;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 @Configuration
-public class UserAgentConfig {
+public class AppConfig {
 
     @Bean
     public List<String> userAgents() {
@@ -23,5 +28,10 @@ public class UserAgentConfig {
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36",
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
         );
+    }
+
+    @Bean
+    public BlockingQueue<String> urlQueue() {
+        return new LinkedBlockingQueue<>();
     }
 }

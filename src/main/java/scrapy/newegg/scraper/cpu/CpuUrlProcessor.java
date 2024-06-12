@@ -25,6 +25,7 @@ public class CpuUrlProcessor implements ProductUrlProcessor {
 
     private final ExecutorService scrapingExecutor = Executors.newSingleThreadExecutor();
 
+    @Override
     public void startProcessing() {
         scrapingExecutor.submit(() -> {
             while (true) {
@@ -37,17 +38,25 @@ public class CpuUrlProcessor implements ProductUrlProcessor {
         String productUrl = null;
         try {
             productUrl = urlQueue.take();
+            logger.info("Processing URL: " + productUrl);
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            Thread.currentThread().interrupt();
+            logger.log(Level.SEVERE, "Thread was interrupted", e);
+            return;
         }
-        if (productUrl == null) return;
+
+        if (productUrl == null) {
+            logger.warning("Product URL is null, skipping...");
+            return;
+        }
 
         String brand = getBrandFromUrl(productUrl);
+        logger.info("Detected brand: " + brand);
 
         try {
             ProductCpu product = createProductFromUrl(productUrl, brand);
             if (product != null) {
-                // Do not save the product here
+                // Handle the scraped product, e.g., save to the database
             }
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error scraping product data from URL: " + productUrl, e);
@@ -69,6 +78,7 @@ public class CpuUrlProcessor implements ProductUrlProcessor {
             ProductScraper<?> scraper = productCpuScraperFactoryProvider.getScraper("CPU_AMD");
             if (scraper != null) {
                 try {
+                    scraper.setProductUrl(productUrl);
                     scraper.call();
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Error scraping product data for AMD CPU", e);
@@ -80,6 +90,7 @@ public class CpuUrlProcessor implements ProductUrlProcessor {
             ProductScraper<?> scraper = productCpuScraperFactoryProvider.getScraper("CPU_INTEL");
             if (scraper != null) {
                 try {
+                    scraper.setProductUrl(productUrl);
                     scraper.call();
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Error scraping product data for Intel CPU", e);

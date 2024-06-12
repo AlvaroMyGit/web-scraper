@@ -20,6 +20,7 @@ import java.util.logging.Logger;
 public class CpuAmdScraper implements ProductScraper<ProductCpuAmd> {
     private static final Logger logger = Logger.getLogger(CpuAmdScraper.class.getName());
 
+
     @Autowired
     private DefaultValueParser valueParser;
 
@@ -29,7 +30,7 @@ public class CpuAmdScraper implements ProductScraper<ProductCpuAmd> {
     private String productUrl;
 
     @Override
-    public ScrapingResult<ProductCpuAmd> call() {
+    public ScrapingResult call() {
         try {
             Element specsTabPane = getSpecsTabPane();
             if (specsTabPane != null) {
@@ -85,10 +86,26 @@ public class CpuAmdScraper implements ProductScraper<ProductCpuAmd> {
             // Send HTTP GET request
             Document doc = Jsoup.connect(productUrl).get();
 
-            // Find the tab pane containing the specifications
-            return doc.select("div.tab-pane:contains(Specs)").first();
+            // Find the product details section
+            Element productDetails = doc.getElementById("product-details");
+            if (productDetails != null) {
+                // Find the tab pane containing the specifications
+                Element specsTabPane = productDetails.select("div.tab-pane").get(1); // assuming the second tab-pane is Specs
+                if (specsTabPane != null) {
+                    return specsTabPane;
+                } else {
+                    logger.warning("No specs tab pane found within product details section.");
+                    return null;
+                }
+            } else {
+                logger.warning("No product details section found.");
+                return null;
+            }
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Error connecting to product URL: " + productUrl, e);
+            return null;
+        } catch (IndexOutOfBoundsException e) {
+            logger.warning("No specs tab pane found at the expected index.");
             return null;
         }
     }
@@ -99,7 +116,7 @@ public class CpuAmdScraper implements ProductScraper<ProductCpuAmd> {
             // Find the table containing the specifications within the tab pane
             return specsTabPane.select("table.table-horizontal").first();
         } else {
-            logger.warning("No specs tab pane found.");
+            logger.warning("Specs tab pane is null.");
             return null;
         }
     }
@@ -108,5 +125,10 @@ public class CpuAmdScraper implements ProductScraper<ProductCpuAmd> {
     @Override
     public void saveProduct(ProductCpuAmd product) {
         productCpuAmdRepository.save(product);
+    }
+
+    @Override
+    public void setProductUrl(String productUrl) {
+        this.productUrl = productUrl;
     }
 }

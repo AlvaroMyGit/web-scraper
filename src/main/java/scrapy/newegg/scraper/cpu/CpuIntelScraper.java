@@ -29,7 +29,7 @@ public class CpuIntelScraper implements ProductScraper<ProductCpuIntel> {
     private String productUrl;
 
     @Override
-    public ScrapingResult<ProductCpuIntel> call() {
+    public ScrapingResult call() {
         try {
             Element specsTabPane = getSpecsTabPane();
             if (specsTabPane != null) {
@@ -96,10 +96,26 @@ public class CpuIntelScraper implements ProductScraper<ProductCpuIntel> {
             // Send HTTP GET request
             Document doc = Jsoup.connect(productUrl).get();
 
-            // Find the tab pane containing the specifications
-            return doc.select("div.tab-pane:contains(Specs)").first();
+            // Find the product details section
+            Element productDetails = doc.getElementById("product-details");
+            if (productDetails != null) {
+                // Find the tab pane containing the specifications
+                Element specsTabPane = productDetails.select("div.tab-pane").get(1); // assuming the second tab-pane is Specs
+                if (specsTabPane != null) {
+                    return specsTabPane;
+                } else {
+                    logger.warning("No specs tab pane found within product details section.");
+                    return null;
+                }
+            } else {
+                logger.warning("No product details section found.");
+                return null;
+            }
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Error connecting to product URL: " + productUrl, e);
+            return null;
+        } catch (IndexOutOfBoundsException e) {
+            logger.warning("No specs tab pane found at the expected index.");
             return null;
         }
     }
@@ -110,7 +126,7 @@ public class CpuIntelScraper implements ProductScraper<ProductCpuIntel> {
             // Find the table containing the specifications within the tab pane
             return specsTabPane.select("table.table-horizontal").first();
         } else {
-            logger.warning("No specs tab pane found.");
+            logger.warning("Specs tab pane is null.");
             return null;
         }
     }
@@ -118,5 +134,10 @@ public class CpuIntelScraper implements ProductScraper<ProductCpuIntel> {
     @Override
     public void saveProduct(ProductCpuIntel product) {
         productCpuIntelRepository.save(product);
+    }
+
+    @Override
+    public void setProductUrl(String productUrl) {
+        this.productUrl = productUrl;
     }
 }
