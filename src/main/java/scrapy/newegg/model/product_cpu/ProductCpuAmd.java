@@ -56,19 +56,11 @@ public class ProductCpuAmd extends AbstractProduct implements ProductCpu {
 
     @Autowired
     private CategoryRepository categoryRepository;
-
-    private static final Logger logger = Logger.getLogger(ProductCpuAmd.class.getName());
-
     // Constructor
-    public ProductCpuAmd() {
-        // Fetch the "CPU" category from the database
-        this.category = categoryRepository.findByName("CPU");
-        if (this.category == null) {
-            // Log an error and throw an exception if the "CPU" category is not found
-            String errorMessage = "CPU category not found in the database";
-            logger.warning(errorMessage);
-            throw new RuntimeException(errorMessage);
-        }
+    public ProductCpuAmd() {}
+
+    public ProductCpuAmd(Category category) {
+        this.category = category;
     }
 
     @Override

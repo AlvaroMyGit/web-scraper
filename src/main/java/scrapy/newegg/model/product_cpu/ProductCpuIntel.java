@@ -64,19 +64,11 @@ public class ProductCpuIntel extends AbstractProduct implements ProductCpu{
 
     @Autowired
     private CategoryRepository categoryRepository;
+    public ProductCpuIntel () {}
 
-    private static final Logger logger = Logger.getLogger(ProductCpuIntel.class.getName());
-    public ProductCpuIntel () {
-        // Fetch the "CPU" category from the database
-        this.category = categoryRepository.findByName("CPU");
-        if (this.category == null) {
-            // Log an error and throw an exception if the "CPU" category is not found
-            String errorMessage = "CPU category not found in the database";
-            logger.warning(errorMessage);
-            throw new RuntimeException(errorMessage);
-        }
+    public ProductCpuIntel(Category category) {
+        this.category = category;
     }
-
     @Override
     public Long getId() {
         return id;
