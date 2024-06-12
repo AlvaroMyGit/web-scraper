@@ -1,7 +1,11 @@
 package scrapy.newegg.scraper.cpu;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
-import org.checkerframework.checker.units.qual.C;
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -11,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import scrapy.newegg.scraper.ProductUrlFetcher;
 
-import java.util.Arrays;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -29,10 +33,10 @@ public class CpuUrlFetcher implements ProductUrlFetcher {
     private BlockingQueue<String> urlQueue;
 
     @Autowired
-    private List<String> userAgents; // Injected user agents list
+    private List<String> userAgents;
 
+    @Override
     public void fetchProductUrls() {
-        WebDriverManager.chromedriver().setup();
         String baseUrl = "https://www.newegg.com/Processors-Desktops/SubCategory/ID-343?PageSize=96";
         int page = 1;
         boolean hasNextPage = true;
@@ -42,47 +46,40 @@ public class CpuUrlFetcher implements ProductUrlFetcher {
             logger.info("Fetching URL: " + url);
 
             String userAgent = getRandomUserAgent();
-            WebDriver driver = setupWebDriver(userAgent);
 
-            try {
-                driver.get(url);
-                logger.info("Page loaded successfully");
+            Document doc = fetchPage(url, userAgent);
+            Elements productRows = doc.select(".item-container");
 
-                List<WebElement> productRows = driver.findElements(By.cssSelector(".item-cell"));
-                if (productRows.isEmpty()) {
-                    hasNextPage = false;
-                    logger.info("No more products found, ending pagination.");
-                } else {
-                    addProductUrlsToQueue(productRows);
-                }
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Error during scraping", e);
-            } finally {
-                driver.quit();
+            if (productRows.isEmpty()) {
+                hasNextPage = false;
+                logger.info("No more products found, ending pagination.");
+            } else {
+                addProductUrlsToQueue(productRows);
             }
+
             page++;
         }
     }
 
-    public WebDriver setupWebDriver(String userAgent) {
-        ChromeOptions options = new ChromeOptions();
-        options.addArguments("--user-agent=" + userAgent);
-        options.addArguments("--headless");
-        options.setExperimentalOption("useAutomationExtension", false);
-        options.setExperimentalOption("excludeSwitches", Collections.singletonList("enable-automation"));
-
-        return new ChromeDriver(options);
+    public Document fetchPage(String url, String userAgent) {
+        Connection connection = Jsoup.connect(url).userAgent(userAgent);
+        try {
+            return connection.get();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public void addProductUrlsToQueue(List<WebElement> productRows) {
-        for (WebElement row : productRows) {
-            String productUrl = row.findElement(By.cssSelector(".item-title")).getAttribute("href");
+    public void addProductUrlsToQueue(Elements productRows) {
+        for (Element row : productRows) {
+            String productUrl = row.select(".item-title").attr("href");
             try {
                 urlQueue.put(productUrl);
+                logger.info("Added product URL to the queue: " + productUrl);
             } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                logger.log(Level.SEVERE, "Error adding product URL to queue", e);
+                Thread.currentThread().interrupt();
             }
-            logger.info("Added product URL to the queue: " + productUrl);
         }
     }
 

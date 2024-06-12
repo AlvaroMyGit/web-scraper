@@ -8,6 +8,7 @@ import scrapy.newegg.model.cpu.ProductCpuAmd;
 import scrapy.newegg.model.cpu.ProductCpuIntel;
 import scrapy.newegg.repository.category.cpu.ProductCpuAmdRepository;
 import scrapy.newegg.repository.category.cpu.ProductCpuIntelRepository;
+import scrapy.newegg.scraper.ProductUrlProcessor;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -15,10 +16,10 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@Component
-public class URLProcessor {
 
-    private static final Logger logger = Logger.getLogger(URLProcessor.class.getName());
+@Component
+public class CpuUrlProcessor implements ProductUrlProcessor {
+    private static final Logger logger = Logger.getLogger(CpuUrlProcessor.class.getName());
 
     @Autowired
     private BlockingQueue<String> urlQueue;
@@ -37,18 +38,18 @@ public class URLProcessor {
     public void startProcessing() {
         scrapingExecutor.submit(() -> {
             while (true) {
-                try {
-                    processNextProductUrl();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
+                processNextProductUrl();
             }
         });
     }
 
-    private void processNextProductUrl() throws InterruptedException {
-        String productUrl = urlQueue.take();
+    public void processNextProductUrl() {
+        String productUrl = null;
+        try {
+            productUrl = urlQueue.take();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         if (productUrl == null) return;
 
         String brand = getBrandFromUrl(productUrl);
@@ -63,7 +64,7 @@ public class URLProcessor {
         }
     }
 
-    private String getBrandFromUrl(String productUrl) {
+    public String getBrandFromUrl(String productUrl) {
         if (productUrl.contains("amd")) {
             return "amd";
         } else if (productUrl.contains("intel")) {
@@ -73,12 +74,12 @@ public class URLProcessor {
         }
     }
 
-    private ProductCpu createProductFromUrl(String productUrl, String brand) {
+    public ProductCpu createProductFromUrl(String productUrl, String brand) {
         String categoryName = brand.equalsIgnoreCase("amd") ? "CPU_AMD" : "CPU_INTEL";
         return productCpuFactoryProvider.createProductCpu(categoryName);
     }
 
-    private void saveProduct(ProductCpu product) {
+    public void saveProduct(ProductCpu product) {
         if (product instanceof ProductCpuAmd) {
             productCpuAmdRepository.save((ProductCpuAmd) product);
         } else if (product instanceof ProductCpuIntel) {
