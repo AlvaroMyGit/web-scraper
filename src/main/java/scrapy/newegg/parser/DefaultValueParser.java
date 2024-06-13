@@ -1,13 +1,10 @@
 package scrapy.newegg.parser;
 
 import org.jsoup.nodes.Element;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 
 @Component
 public class DefaultValueParser implements ValueParser {
@@ -53,6 +50,16 @@ public class DefaultValueParser implements ValueParser {
         } catch (Exception e) {
             logger.log(Level.WARNING, "Failed to parse BigDecimal for selector: " + label, e);
             return BigDecimal.ZERO;
+        }
+    }
+
+    @Override
+    public <T> T apply(Element element, String label, ValueParserFunction<T> function) {
+        try {
+            return function.apply(element, label, this);
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Failed to apply function for label: " + label, e);
+            return null;
         }
     }
 }

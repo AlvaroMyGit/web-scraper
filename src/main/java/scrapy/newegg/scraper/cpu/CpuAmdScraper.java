@@ -1,18 +1,20 @@
 package scrapy.newegg.scraper.cpu;
 
 import org.jsoup.Jsoup;
-import org.jsoup.helper.Consumer;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import scrapy.newegg.config.ScrapingResult;
 import scrapy.newegg.model.cpu.ProductCpuAmd;
-import scrapy.newegg.parser.DefaultValueParser;
+import scrapy.newegg.parser.ValueParser;
+import scrapy.newegg.parser.ValueParserFunction;
 import scrapy.newegg.repository.category.cpu.ProductCpuAmdRepository;
 import scrapy.newegg.scraper.ProductScraper;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,7 +23,7 @@ public class CpuAmdScraper implements ProductScraper<ProductCpuAmd> {
     private static final Logger logger = Logger.getLogger(CpuAmdScraper.class.getName());
 
     @Autowired
-    private DefaultValueParser valueParser;
+    private ValueParser valueParser;
 
     @Autowired
     private ProductCpuAmdRepository productCpuAmdRepository;
@@ -33,41 +35,44 @@ public class CpuAmdScraper implements ProductScraper<ProductCpuAmd> {
         try {
             Element specsTabPane = getSpecsTabPane();
             if (specsTabPane != null) {
-                Element specsTable = getSpecsTable(specsTabPane);
-                if (specsTable != null) {
+                Elements specsTables = specsTabPane.select("table.table-horizontal");
+
+                if (!specsTables.isEmpty()) {
                     ProductCpuAmd product = new ProductCpuAmd();
                     product.setBrand("AMD");
 
-                    parseAndLog(specsTable, product, "Name", (value) -> product.setName(value));
-                    parseAndLog(specsTable, product, "Price", (value) -> product.setPrice(valueParser.parseBigDecimal(specsTable, "Price")));
-                    parseAndLog(specsTable, product, "Processors Type", (value) -> product.setProcessorsType(value));
-                    parseAndLog(specsTable, product, "Series", (value) -> product.setSeries(value));
-                    parseAndLog(specsTable, product, "Model", (value) -> product.setModel(value));
-                    parseAndLog(specsTable, product, "CPU Socket Type", (value) -> product.setCpuSocketType(value));
-                    parseAndLog(specsTable, product, "# of Cores", (value) -> product.setNumberOfCores(valueParser.parseInt(specsTable, "# of Cores")));
-                    parseAndLog(specsTable, product, "# of Threads", (value) -> product.setNumberOfThreads(valueParser.parseInt(specsTable, "# of Threads")));
-                    parseAndLog(specsTable, product, "Operating Frequency", (value) -> product.setOperatingFrequency(valueParser.parseDouble(specsTable, "Operating Frequency")));
-                    parseAndLog(specsTable, product, "Max Turbo Frequency", (value) -> product.setMaxTurboFrequency(valueParser.parseDouble(specsTable, "Max Turbo Frequency")));
-                    parseAndLog(specsTable, product, "L1 Cache", (value) -> product.setL1Cache(value));
-                    parseAndLog(specsTable, product, "L2 Cache", (value) -> product.setL2Cache(value));
-                    parseAndLog(specsTable, product, "L3 Cache", (value) -> product.setL3Cache(value));
-                    parseAndLog(specsTable, product, "Manufacturing Tech", (value) -> product.setManufacturingTech(value));
-                    parseAndLog(specsTable, product, "64-Bit Support", (value) -> product.setSupport64Bit(value));
-                    parseAndLog(specsTable, product, "Memory Types", (value) -> product.setMemoryTypes(value));
-                    parseAndLog(specsTable, product, "Memory Channel", (value) -> product.setMemoryChannel(valueParser.parseInt(specsTable, "Memory Channel")));
-                    parseAndLog(specsTable, product, "ECC Memory", (value) -> product.setIsEccMemorySupported(value));
-                    parseAndLog(specsTable, product, "Integrated Graphics", (value) -> product.setIntegratedGraphics(value));
-                    parseAndLog(specsTable, product, "Graphics Base Frequency", (value) -> product.setGraphicsBaseFrequency(valueParser.parseInt(specsTable, "Graphics Base Frequency")));
-                    parseAndLog(specsTable, product, "Graphics Max Dynamic Frequency", (value) -> product.setGraphicsMaxBaseFrequency(valueParser.parseInt(specsTable, "Graphics Max Dynamic Frequency")));
-                    parseAndLog(specsTable, product, "PCI Express Revision", (value) -> product.setPciExpressRevision(value));
-                    parseAndLog(specsTable, product, "Thermal Design Power", (value) -> product.setThermalDesignPower(valueParser.parseInt(specsTable, "Thermal Design Power")));
-                    parseAndLog(specsTable, product, "Cooling Device", (value) -> product.setCoolingDevice(value));
-                    parseAndLog(specsTable, product, "Operating System Supported", (value) -> product.setOperatingSystemSupported(value));
+                    for (Element specsTable : specsTables) {
+                        parseAndLog(specsTable, product, "Name", (value, label, parser) -> parser.parseString(value, label), product::setName);
+                        parseAndLog(specsTable, product, "Price", (value, label, parser) -> parser.parseBigDecimal(value, label), product::setPrice);
+                        parseAndLog(specsTable, product, "Processors Type", (value, label, parser) -> parser.parseString(value, label), product::setProcessorsType);
+                        parseAndLog(specsTable, product, "Series", (value, label, parser) -> parser.parseString(value, label), product::setSeries);
+                        parseAndLog(specsTable, product, "Model", (value, label, parser) -> parser.parseString(value, label), product::setModel);
+                        parseAndLog(specsTable, product, "CPU Socket Type", (value, label, parser) -> parser.parseString(value, label), product::setCpuSocketType);
+                        parseAndLog(specsTable, product, "# of Cores", (value, label, parser) -> parser.parseInt(value, label), product::setNumberOfCores);
+                        parseAndLog(specsTable, product, "# of Threads", (value, label, parser) -> parser.parseInt(value, label), product::setNumberOfThreads);
+                        parseAndLog(specsTable, product, "Operating Frequency", (value, label, parser) -> parser.parseDouble(value, label), product::setOperatingFrequency);
+                        parseAndLog(specsTable, product, "Max Turbo Frequency", (value, label, parser) -> parser.parseDouble(value, label), product::setMaxTurboFrequency);
+                        parseAndLog(specsTable, product, "L1 Cache", (value, label, parser) -> parser.parseString(value, label), product::setL1Cache);
+                        parseAndLog(specsTable, product, "L2 Cache", (value, label, parser) -> parser.parseString(value, label), product::setL2Cache);
+                        parseAndLog(specsTable, product, "L3 Cache", (value, label, parser) -> parser.parseString(value, label), product::setL3Cache);
+                        parseAndLog(specsTable, product, "Manufacturing Tech", (value, label, parser) -> parser.parseString(value, label), product::setManufacturingTech);
+                        parseAndLog(specsTable, product, "64-Bit Support", (value, label, parser) -> parser.parseString(value, label), product::setSupport64Bit);
+                        parseAndLog(specsTable, product, "Memory Types", (value, label, parser) -> parser.parseString(value, label), product::setMemoryTypes);
+                        parseAndLog(specsTable, product, "Memory Channel", (value, label, parser) -> parser.parseInt(value, label), product::setMemoryChannel);
+                        parseAndLog(specsTable, product, "ECC Memory", (value, label, parser) -> parser.parseString(value, label), product::setIsEccMemorySupported);
+                        parseAndLog(specsTable, product, "Integrated Graphics", (value, label, parser) -> parser.parseString(value, label), product::setIntegratedGraphics);
+                        parseAndLog(specsTable, product, "Graphics Base Frequency", (value, label, parser) -> parser.parseInt(value, label), product::setGraphicsBaseFrequency);
+                        parseAndLog(specsTable, product, "Graphics Max Dynamic Frequency", (value, label, parser) -> parser.parseInt(value, label), product::setGraphicsMaxBaseFrequency);
+                        parseAndLog(specsTable, product, "PCI Express Revision", (value, label, parser) -> parser.parseString(value, label), product::setPciExpressRevision);
+                        parseAndLog(specsTable, product, "Thermal Design Power", (value, label, parser) -> parser.parseInt(value, label), product::setThermalDesignPower);
+                        parseAndLog(specsTable, product, "Cooling Device", (value, label, parser) -> parser.parseString(value, label), product::setCoolingDevice);
+                        parseAndLog(specsTable, product, "Operating System Supported", (value, label, parser) -> parser.parseString(value, label), product::setOperatingSystemSupported);
+                    }
 
                     saveProduct(product);
                     return ScrapingResult.SUCCESS;
                 } else {
-                    logger.warning("No specifications table found.");
+                    logger.warning("No specifications tables found.");
                     return ScrapingResult.NO_SPECIFICATIONS_TABLE;
                 }
             } else {
@@ -80,14 +85,27 @@ public class CpuAmdScraper implements ProductScraper<ProductCpuAmd> {
         }
     }
 
-    private void parseAndLog(Element specsTable, ProductCpuAmd product, String fieldName, Consumer<String> setter) {
+    @Override
+    public <T> void parseAndLog(Element specsTable, ProductCpuAmd product, String fieldName, ValueParserFunction<T> parserFunction, Consumer<T> setter) {
         try {
-            String value = valueParser.parseString(specsTable, fieldName);
-            setter.accept(value);
-            logger.info("Parsed " + fieldName + ": " + value);
+            T parsedValue = valueParser.apply(specsTable, fieldName, parserFunction);
+            setter.accept(parsedValue);
+            logger.info("Parsed " + fieldName + ": " + parsedValue);
         } catch (Exception e) {
             logger.warning("Failed to parse " + fieldName + ": " + e.getMessage());
         }
+    }
+
+    @Override
+    public String getValueByLabel(Element table, String label) {
+        Elements rows = table.select("tr");
+        for (Element row : rows) {
+            Element th = row.select("th").first();
+            if (th != null && th.text().contains(label)) {
+                return row.select("td").first().text();
+            }
+        }
+        return "";
     }
 
     @Override
@@ -96,7 +114,6 @@ public class CpuAmdScraper implements ProductScraper<ProductCpuAmd> {
             Document doc = Jsoup.connect(productUrl).get();
             Element productDetails = doc.getElementById("product-details");
             if (productDetails != null) {
-                // Adjusted logic to find the correct tab-pane
                 for (Element tabPane : productDetails.select("div.tab-pane")) {
                     if (tabPane.text().contains("Specifications")) {
                         return tabPane;
@@ -109,16 +126,6 @@ public class CpuAmdScraper implements ProductScraper<ProductCpuAmd> {
             logger.log(Level.SEVERE, "Error connecting to product URL: " + productUrl, e);
         }
         return null;
-    }
-
-    @Override
-    public Element getSpecsTable(Element specsTabPane) {
-        if (specsTabPane != null) {
-            return specsTabPane.select("table.table-horizontal").first();
-        } else {
-            logger.warning("Specs tab pane is null.");
-            return null;
-        }
     }
 
     @Override

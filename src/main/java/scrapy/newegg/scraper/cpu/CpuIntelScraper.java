@@ -3,25 +3,27 @@ package scrapy.newegg.scraper.cpu;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import scrapy.newegg.config.ScrapingResult;
 import scrapy.newegg.model.cpu.ProductCpuIntel;
-import scrapy.newegg.parser.DefaultValueParser;
+import scrapy.newegg.parser.ValueParser;
 import scrapy.newegg.repository.category.cpu.ProductCpuIntelRepository;
 import scrapy.newegg.scraper.ProductScraper;
 
 import java.io.IOException;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Component
 public class CpuIntelScraper implements ProductScraper<ProductCpuIntel> {
-
     private static final Logger logger = Logger.getLogger(CpuIntelScraper.class.getName());
 
     @Autowired
-    private DefaultValueParser valueParser;
+    private ValueParser valueParser;
 
     @Autowired
     private ProductCpuIntelRepository productCpuIntelRepository;
@@ -33,174 +35,65 @@ public class CpuIntelScraper implements ProductScraper<ProductCpuIntel> {
         try {
             Element specsTabPane = getSpecsTabPane();
             if (specsTabPane != null) {
-                Element specsTable = getSpecsTable(specsTabPane);
-                if (specsTable != null) {
+                Elements specsTables = specsTabPane.select("table.table-horizontal");
+
+                if (!specsTables.isEmpty()) {
                     ProductCpuIntel product = new ProductCpuIntel();
-                    product.setBrand("Intel"); // Set brand explicitly for Intel CPUs
+                    product.setBrand("Intel");
 
-                    // Log and parse each field
-                    logger.info("Parsing Name...");
-                    product.setName(valueParser.parseString(specsTable, "Name"));
-                    logger.info("Parsed Name: " + product.getName());
+                    parseAndLog(specsTables, product,
+                            "Name", (value, label, parser) -> parser.parseString(value, label), ProductCpuIntel::setName);
+                    parseAndLog(specsTables, product,
+                            "Price", (value, label, parser) -> parser.parseBigDecimal(value, label), ProductCpuIntel::setPrice);
+                    parseAndLog(specsTables, product,
+                            "Processors Type", (value, label, parser) -> parser.parseString(value, label), ProductCpuIntel::setProcessorsType);
+                    parseAndLog(specsTables, product,
+                            "Series", (value, label, parser) -> parser.parseString(value, label), ProductCpuIntel::setSeries);
+                    parseAndLog(specsTables, product,
+                            "Model", (value, label, parser) -> parser.parseString(value, label), ProductCpuIntel::setModel);
+                    parseAndLog(specsTables, product,
+                            "CPU Socket Type", (value, label, parser) -> parser.parseString(value, label), ProductCpuIntel::setCpuSocketType);
+                    parseAndLog(specsTables, product,
+                            "# of Cores", (value, label, parser) -> parser.parseInt(value, label), ProductCpuIntel::setNumberOfCores);
+                    parseAndLog(specsTables, product,
+                            "# of Threads", (value, label, parser) -> parser.parseInt(value, label), ProductCpuIntel::setNumberOfThreads);
+                    parseAndLog(specsTables, product,
+                            "Operating Frequency", (value, label, parser) -> parser.parseDouble(value, label), ProductCpuIntel::setOperatingFrequencyPerformanceCoreBase);
+                    parseAndLog(specsTables, product,
+                            "Max Turbo Frequency", (value, label, parser) -> parser.parseDouble(value, label), ProductCpuIntel::setMaxTurboFrequencyPCore);
+                    parseAndLog(specsTables, product,
+                            "L2 Cache", (value, label, parser) -> parser.parseString(value, label), ProductCpuIntel::setL2Cache);
+                    parseAndLog(specsTables, product,
+                            "L3 Cache", (value, label, parser) -> parser.parseString(value, label), ProductCpuIntel::setL3Cache);
+                    parseAndLog(specsTables, product,
+                            "Manufacturing Tech", (value, label, parser) -> parser.parseString(value, label), ProductCpuIntel::setManufacturingTech);
+                    parseAndLog(specsTables, product,
+                            "64-Bit Support", (value, label, parser) -> parser.parseString(value, label), ProductCpuIntel::setSupport64Bit);
+                    parseAndLog(specsTables, product,
+                            "Memory Types", (value, label, parser) -> parser.parseString(value, label), ProductCpuIntel::setMemoryTypes);
+                    parseAndLog(specsTables, product,
+                            "Memory Channel", (value, label, parser) -> parser.parseInt(value, label), ProductCpuIntel::setMemoryChannel);
+                    parseAndLog(specsTables, product,
+                            "ECC Memory", (value, label, parser) -> parser.parseString(value, label), ProductCpuIntel::setEccMemorySupported);
+                    parseAndLog(specsTables, product,
+                            "Integrated Graphics", (value, label, parser) -> parser.parseString(value, label), ProductCpuIntel::setIntegratedGraphics);
+                    parseAndLog(specsTables, product,
+                            "Graphics Base Frequency", (value, label, parser) -> parser.parseInt(value, label), ProductCpuIntel::setGraphicsBaseFrequency);
+                    parseAndLog(specsTables, product,
+                            "Graphics Max Dynamic Frequency", (value, label, parser) -> parser.parseInt(value, label), ProductCpuIntel::setGraphicsMaxDynamicFrequency);
+                    parseAndLog(specsTables, product,
+                            "PCI Express Revision", (value, label, parser) -> parser.parseString(value, label), ProductCpuIntel::setPciExpressRevision);
+                    parseAndLog(specsTables, product,
+                            "Thermal Design Power", (value, label, parser) -> parser.parseInt(value, label), ProductCpuIntel::setThermalDesignPower);
+                    parseAndLog(specsTables, product,
+                            "Cooling Device", (value, label, parser) -> parser.parseString(value, label), ProductCpuIntel::setCoolingDevice);
+                    parseAndLog(specsTables, product,
+                            "Operating System Supported", (value, label, parser) -> parser.parseString(value, label), ProductCpuIntel::setOperatingSystemSupported);
 
-                    logger.info("Parsing Price...");
-                    product.setPrice(valueParser.parseBigDecimal(specsTable, "Price"));
-                    logger.info("Parsed Price: " + product.getPrice());
-
-                    logger.info("Parsing Processors Type...");
-                    product.setProcessorsType(valueParser.parseString(specsTable, "Processors Type"));
-                    logger.info("Parsed Processors Type: " + product.getProcessorsType());
-
-                    logger.info("Parsing Series...");
-                    product.setSeries(valueParser.parseString(specsTable, "Series"));
-                    logger.info("Parsed Series: " + product.getSeries());
-
-                    logger.info("Parsing Model...");
-                    product.setModel(valueParser.parseString(specsTable, "Model"));
-                    logger.info("Parsed Model: " + product.getModel());
-
-                    logger.info("Parsing CPU Socket Type...");
-                    product.setCpuSocketType(valueParser.parseString(specsTable, "CPU Socket Type"));
-                    logger.info("Parsed CPU Socket Type: " + product.getCpuSocketType());
-
-                    logger.info("Parsing Core Name...");
-                    product.setCoreName(valueParser.parseString(specsTable, "Core Name"));
-                    logger.info("Parsed Core Name: " + product.getCoreName());
-
-                    logger.info("Parsing Number of Cores...");
-                    product.setNumberOfCores(valueParser.parseInt(specsTable, "# of Cores"));
-                    logger.info("Parsed Number of Cores: " + product.getNumberOfCores());
-
-                    logger.info("Parsing Number of Threads...");
-                    product.setNumberOfThreads(valueParser.parseInt(specsTable, "# of Threads"));
-                    logger.info("Parsed Number of Threads: " + product.getNumberOfThreads());
-
-                    logger.info("Parsing Operating Frequency Performance Core Base...");
-                    product.setOperatingFrequencyPerformanceCoreBase(valueParser.parseDouble(specsTable, "Operating Frequency"));
-                    logger.info("Parsed Operating Frequency Performance Core Base: " + product.getOperatingFrequencyPerformanceCoreBase());
-
-                    logger.info("Parsing Operating Frequency Efficient Core Base...");
-                    product.setOperatingFrequencyEfficientCoreBase(valueParser.parseDouble(specsTable, "Efficient-core Base Frequency"));
-                    logger.info("Parsed Operating Frequency Efficient Core Base: " + product.getOperatingFrequencyEfficientCoreBase());
-
-                    logger.info("Parsing Max Turbo Frequency Turbo Boost Max Technology...");
-                    product.setMaxTurboFrequencyTurboBoostMaxTechnology(valueParser.parseDouble(specsTable, "Max Turbo Frequency"));
-                    logger.info("Parsed Max Turbo Frequency Turbo Boost Max Technology: " + product.getMaxTurboFrequencyTurboBoostMaxTechnology());
-
-                    logger.info("Parsing Max Turbo Frequency P-Core...");
-                    product.setMaxTurboFrequencyPCore(valueParser.parseDouble(specsTable, "P-core Max Turbo Frequency"));
-                    logger.info("Parsed Max Turbo Frequency P-Core: " + product.getMaxTurboFrequencyPCore());
-
-                    logger.info("Parsing Max Turbo Frequency E-Core...");
-                    product.setMaxTurboFrequencyECore(valueParser.parseDouble(specsTable, "E-core Max Turbo Frequency"));
-                    logger.info("Parsed Max Turbo Frequency E-Core: " + product.getMaxTurboFrequencyECore());
-
-                    logger.info("Parsing L2 Cache...");
-                    product.setL2Cache(valueParser.parseString(specsTable, "L2 Cache"));
-                    logger.info("Parsed L2 Cache: " + product.getL2Cache());
-
-                    logger.info("Parsing L3 Cache...");
-                    product.setL3Cache(valueParser.parseString(specsTable, "L3 Cache"));
-                    logger.info("Parsed L3 Cache: " + product.getL3Cache());
-
-                    logger.info("Parsing Manufacturing Tech...");
-                    product.setManufacturingTech(valueParser.parseString(specsTable, "Manufacturing Tech"));
-                    logger.info("Parsed Manufacturing Tech: " + product.getManufacturingTech());
-
-                    logger.info("Parsing 64-Bit Support...");
-                    product.setSupport64Bit(valueParser.parseString(specsTable, "64-Bit Support"));
-                    logger.info("Parsed 64-Bit Support: " + product.getSupport64Bit());
-
-                    logger.info("Parsing Hyper-Threading Support...");
-                    product.setHyperThreadingSupport(valueParser.parseString(specsTable, "Hyper-Threading Support"));
-                    logger.info("Parsed Hyper-Threading Support: " + product.getHyperThreadingSupport());
-
-                    logger.info("Parsing Memory Types...");
-                    product.setMemoryTypes(valueParser.parseString(specsTable, "Memory Types"));
-                    logger.info("Parsed Memory Types: " + product.getMemoryTypes());
-
-                    logger.info("Parsing Memory Channel...");
-                    product.setMemoryChannel(valueParser.parseInt(specsTable, "Memory Channel"));
-                    logger.info("Parsed Memory Channel: " + product.getMemoryChannel());
-
-                    logger.info("Parsing Max Memory Size...");
-                    product.setMaxMemorySize(valueParser.parseInt(specsTable, "Max Memory Size"));
-                    logger.info("Parsed Max Memory Size: " + product.getMaxMemorySize());
-
-                    logger.info("Parsing ECC Memory...");
-                    product.setEccMemorySupported(valueParser.parseString(specsTable, "ECC Memory"));
-                    logger.info("Parsed ECC Memory: " + product.getEccMemorySupported());
-
-                    logger.info("Parsing Max Memory Bandwidth...");
-                    product.setMaxMemoryBandwidth(valueParser.parseDouble(specsTable, "Max Memory Bandwidth"));
-                    logger.info("Parsed Max Memory Bandwidth: " + product.getMaxMemoryBandwidth());
-
-                    logger.info("Parsing Virtualization Technology Support...");
-                    product.setVirtualizationTechnologySupport(valueParser.parseString(specsTable, "Virtualization Technology Support"));
-                    logger.info("Parsed Virtualization Technology Support: " + product.getVirtualizationTechnologySupport());
-
-                    logger.info("Parsing Integrated Graphics...");
-                    product.setIntegratedGraphics(valueParser.parseString(specsTable, "Integrated Graphics"));
-                    logger.info("Parsed Integrated Graphics: " + product.getIntegratedGraphics());
-
-                    logger.info("Parsing Graphics Base Frequency...");
-                    product.setGraphicsBaseFrequency(valueParser.parseInt(specsTable, "Graphics Base Frequency"));
-                    logger.info("Parsed Graphics Base Frequency: " + product.getGraphicsBaseFrequency());
-
-                    logger.info("Parsing Graphics Max Dynamic Frequency...");
-                    product.setGraphicsMaxDynamicFrequency(valueParser.parseInt(specsTable, "Graphics Max Dynamic Frequency"));
-                    logger.info("Parsed Graphics Max Dynamic Frequency: " + product.getGraphicsMaxDynamicFrequency());
-
-                    logger.info("Parsing Scalability...");
-                    product.setScalability(valueParser.parseString(specsTable, "Scalability"));
-                    logger.info("Parsed Scalability: " + product.getScalability());
-
-                    logger.info("Parsing PCI Express Revision...");
-                    product.setPciExpressRevision(valueParser.parseString(specsTable, "PCI Express Revision"));
-                    logger.info("Parsed PCI Express Revision: " + product.getPciExpressRevision());
-
-                    logger.info("Parsing PCI Express Configurations...");
-                    product.setPciExpressConfigurations(valueParser.parseString(specsTable, "PCI Express Configurations"));
-                    logger.info("Parsed PCI Express Configurations: " + product.getPciExpressConfigurations());
-
-                    logger.info("Parsing Max Number of PCI Express Lanes...");
-                    product.setMaxNumberOfPciExpressLanes(valueParser.parseString(specsTable, "Max Number of PCI Express Lanes"));
-                    logger.info("Parsed Max Number of PCI Express Lanes: " + product.getMaxNumberOfPciExpressLanes());
-
-                    logger.info("Parsing Thermal Design Power...");
-                    product.setThermalDesignPower(valueParser.parseInt(specsTable, "Thermal Design Power"));
-                    logger.info("Parsed Thermal Design Power: " + product.getThermalDesignPower());
-
-                    logger.info("Parsing Max Turbo Power...");
-                    product.setMaxTurboPower(valueParser.parseInt(specsTable, "Max Turbo Power"));
-                    logger.info("Parsed Max Turbo Power: " + product.getMaxTurboPower());
-
-                    logger.info("Parsing Cooling Device...");
-                    product.setCoolingDevice(valueParser.parseString(specsTable, "Cooling Device"));
-                    logger.info("Parsed Cooling Device: " + product.getCoolingDevice());
-
-                    logger.info("Parsing Compatible Desktop Chipsets...");
-                    product.setCompatibleDesktopChipsets(valueParser.parseString(specsTable, "Compatible Desktop Chipsets"));
-                    logger.info("Parsed Compatible Desktop Chipsets: " + product.getCompatibleDesktopChipsets());
-
-                    logger.info("Parsing Operating System Supported...");
-                    product.setOperatingSystemSupported(valueParser.parseString(specsTable, "Operating System Supported"));
-                    logger.info("Parsed Operating System Supported: " + product.getOperatingSystemSupported());
-
-                    logger.info("Parsing Advanced Technologies...");
-                    product.setAdvancedTechnologies(valueParser.parseString(specsTable, "Advanced Technologies"));
-                    logger.info("Parsed Advanced Technologies: " + product.getAdvancedTechnologies());
-
-                    logger.info("Parsing Security & Reliability...");
-                    product.setSecurityAndReliability(valueParser.parseString(specsTable, "Security & Reliability"));
-                    logger.info("Parsed Security & Reliability: " + product.getSecurityAndReliability());
-
-                    logger.info("Saving product to repository...");
                     saveProduct(product);
-                    logger.info("Product saved successfully.");
-                    return ScrapingResult.SUCCESS; // Return success indicator
+                    return ScrapingResult.SUCCESS;
                 } else {
-                    logger.warning("No specifications table found.");
+                    logger.warning("No specifications tables found.");
                     return ScrapingResult.NO_SPECIFICATIONS_TABLE;
                 }
             } else {
@@ -213,51 +106,54 @@ public class CpuIntelScraper implements ProductScraper<ProductCpuIntel> {
         }
     }
 
-    @Override
-    public Element getSpecsTabPane() {
+    private <T> void parseAndLog(Elements specsTables, ProductCpuIntel product, String fieldName, ValueParserFunction valueParserFunction, BiConsumer<ProductCpuIntel, T> setter) {
         try {
-            // Send HTTP GET request
-            Document doc = Jsoup.connect(productUrl).get();
-
-            // Find the product details section
-            Element productDetails = doc.getElementById("product-details");
-            if (productDetails != null) {
-                // Find the tab pane containing the specifications
-                Element specsTabPane = productDetails.select("div.tab-pane").get(1); // assuming the second tab-pane is Specs
-                if (specsTabPane != null) {
-                    return specsTabPane;
-                } else {
-                    logger.warning("No specs tab pane found within product details section.");
-                    return null;
+            for (Element specsTable : specsTables) {
+                Element valueElement = getValueElement(specsTable, fieldName);
+                if (valueElement != null) {
+                    T parsedValue = valueParserFunction.getParserFunction().apply(valueElement.text(), fieldName, valueParser);
+                    setter.accept(product, parsedValue);
+                    logger.info("Parsed " + fieldName + ": " + parsedValue);
+                    return; // Exit after first valid parse
                 }
-            } else {
-                logger.warning("No product details section found.");
-                return null;
             }
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error connecting to product URL: " + productUrl, e);
-            return null;
-        } catch (IndexOutOfBoundsException e) {
-            logger.warning("No specs tab pane found at the expected index.");
-            return null;
+            logger.warning("Failed to parse " + fieldName + ": Value not found in specifications tables.");
+        } catch (Exception e) {
+            logger.warning("Failed to parse " + fieldName + ": " + e.getMessage());
         }
     }
 
-    @Override
-    public Element getSpecsTable(Element specsTabPane) {
-        if (specsTabPane != null) {
-            // Find the table containing the specifications within the tab pane
-            return specsTabPane.select("table.table-horizontal").first();
-        } else {
-            logger.warning("Specs tab pane is null.");
-            return null;
+
+    public Element getValueElement(Element specsTable, String fieldName) {
+        Elements rows = specsTable.select("tr");
+        for (Element row : rows) {
+            Element th = row.select("th").first();
+            if (th != null && th.text().contains(fieldName)) {
+                return row.select("td").first();
+            }
         }
+        return null;
+    }
+
+    @Override
+    public Element getSpecsTabPane() throws IOException {
+        Document doc = Jsoup.connect(productUrl).get();
+        Element productDetails = doc.getElementById("product-details");
+        if (productDetails != null) {
+            for (Element tabPane : productDetails.select("div.tab-pane")) {
+                if (tabPane.text().contains("Specifications")) {
+                    return tabPane;
+                }
+            }
+        } else {
+            logger.warning("No product details section found.");
+        }
+        return null;
     }
 
     @Override
     public void saveProduct(ProductCpuIntel product) {
         try {
-            logger.info("Saving product to the database: " + product);
             productCpuIntelRepository.save(product);
             logger.info("Product saved successfully: " + product);
         } catch (Exception e) {
