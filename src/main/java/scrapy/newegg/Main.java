@@ -1,9 +1,10 @@
+
+
 package scrapy.newegg;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.ComponentScan;
 import scrapy.newegg.scraper.cpu.CpuUrlFetcher;
 import scrapy.newegg.scraper.cpu.CpuUrlProcessor;
 
@@ -33,3 +34,4 @@ public class Main {
         executorService.shutdown();
     }
 }
+

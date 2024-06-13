@@ -1,9 +1,26 @@
+-- Create category table
 CREATE TABLE category (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) UNIQUE NOT NULL,
     description TEXT
 );
 
+-- Insert CPU category
+INSERT INTO category (name, description) VALUES ('CPU', 'Central Processing Unit');
+
+-- Create abstract_product table
+CREATE TABLE abstract_product (
+    id SERIAL PRIMARY KEY,
+    brand VARCHAR(255),
+    name VARCHAR(255),
+    price NUMERIC(19, 2),
+    category_id BIGINT,
+    CONSTRAINT fk_category
+        FOREIGN KEY (category_id)
+        REFERENCES category(id)
+);
+
+-- Create amd_cpu table
 CREATE TABLE amd_cpu (
     id SERIAL PRIMARY KEY,
     brand VARCHAR(255) NOT NULL,
@@ -32,11 +49,11 @@ CREATE TABLE amd_cpu (
     thermal_design_power INTEGER,
     cooling_device VARCHAR(255),
     operating_system_supported VARCHAR(255),
-    category_id INTEGER NOT NULL,  -- Foreign key referencing category(id)
-    CONSTRAINT fk_category
+    category_id INTEGER NOT NULL,
+    CONSTRAINT fk_amd_category
         FOREIGN KEY (category_id)
         REFERENCES category(id),
-    CONSTRAINT ck_positive_values CHECK (
+    CONSTRAINT ck_amd_positive_values CHECK (
         number_of_cores > 0 AND
         number_of_threads > 0 AND
         operating_frequency > 0 AND
@@ -48,6 +65,7 @@ CREATE TABLE amd_cpu (
     )
 );
 
+-- Create intel_cpu table
 CREATE TABLE intel_cpu (
     id SERIAL PRIMARY KEY,
     brand VARCHAR(255) NOT NULL,
@@ -90,11 +108,11 @@ CREATE TABLE intel_cpu (
     operating_system_supported VARCHAR(255),
     advanced_technologies VARCHAR(255),
     security_and_reliability VARCHAR(255),
-    category_id INTEGER NOT NULL,  -- Foreign key referencing category(id)
-    CONSTRAINT fk_category
+    category_id INTEGER NOT NULL,
+    CONSTRAINT fk_intel_category
         FOREIGN KEY (category_id)
         REFERENCES category(id),
-    CONSTRAINT ck_positive_values CHECK (
+    CONSTRAINT ck_intel_positive_values CHECK (
         number_of_cores > 0 AND
         number_of_threads > 0 AND
         operating_frequency_performance_core_base > 0 AND
@@ -112,26 +130,23 @@ CREATE TABLE intel_cpu (
     )
 );
 
-CREATE TABLE product_cpu (
-    id SERIAL PRIMARY KEY
-    -- Add columns specific to product_cpu here
-);
-
+-- Create product_photo table
 CREATE TABLE product_photo (
     id SERIAL PRIMARY KEY,
-    url VARCHAR(255) NOT NULL,  -- or you can store the image binary data if needed
+    url VARCHAR(255) NOT NULL,
     product_id INTEGER NOT NULL,
-    CONSTRAINT fk_product
+    CONSTRAINT fk_product_photo_product_id
         FOREIGN KEY (product_id)
-        REFERENCES product_cpu(id) ON DELETE CASCADE
+        REFERENCES abstract_product(id)
 );
 
+-- Create compatibility table
 CREATE TABLE compatibility (
     id SERIAL PRIMARY KEY,
     category1_id INTEGER REFERENCES category(id),
     category2_id INTEGER REFERENCES category(id),
-    compatibility_rule TEXT NOT NULL -- JSON or text describing the compatibility rule
+    compatibility_rule TEXT NOT NULL
 );
 
-INSERT INTO category (name, description) VALUES ('CPU', 'Central Processing Unit');
-
+-- Index for foreign key if needed
+CREATE INDEX idx_abstract_product_category_id ON abstract_product (category_id);

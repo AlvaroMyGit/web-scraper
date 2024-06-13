@@ -15,7 +15,7 @@ public interface ProductScraper<T extends Product> extends Callable<ScrapingResu
 
     Element getSpecsTabPane();
 
-    <T2> void parseAndLog(Element specsTable, ProductCpuAmd product, String fieldName, ValueParserFunction<T2> parserFunction, Consumer<T2> setter);
+    <T2> void parseAndLog(Element specsTable, T product, String fieldName, ValueParserFunction<T2> parserFunction, Consumer<T2> setter);
 
     String getValueByLabel(Element table, String label);
 

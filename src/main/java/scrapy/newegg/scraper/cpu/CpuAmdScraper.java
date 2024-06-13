@@ -14,6 +14,8 @@ import scrapy.newegg.repository.category.cpu.ProductCpuAmdRepository;
 import scrapy.newegg.scraper.ProductScraper;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,20 +32,26 @@ public class CpuAmdScraper implements ProductScraper<ProductCpuAmd> {
 
     private String productUrl;
 
+    private Document doc;
+
     @Override
     public ScrapingResult call() {
         try {
             Element specsTabPane = getSpecsTabPane();
             if (specsTabPane != null) {
-                Elements specsTables = specsTabPane.select("table.table-horizontal");
+                Elements specsTables = specsTabPane.select("div.tab-pane");
 
                 if (!specsTables.isEmpty()) {
                     ProductCpuAmd product = new ProductCpuAmd();
                     product.setBrand("AMD");
 
                     for (Element specsTable : specsTables) {
+                        waitFor(1, TimeUnit.SECONDS);
+                        //logger.info("SPECS TABLE content:\n" + specsTable.html());
+                        logger.info("Starting product details scraping.");
                         parseAndLog(specsTable, product, "Name", (value, label, parser) -> parser.parseString(value, label), product::setName);
-                        parseAndLog(specsTable, product, "Price", (value, label, parser) -> parser.parseBigDecimal(value, label), product::setPrice);
+                        BigDecimal price = valueParser.parsePrice(doc);
+                        product.setPrice(price);
                         parseAndLog(specsTable, product, "Processors Type", (value, label, parser) -> parser.parseString(value, label), product::setProcessorsType);
                         parseAndLog(specsTable, product, "Series", (value, label, parser) -> parser.parseString(value, label), product::setSeries);
                         parseAndLog(specsTable, product, "Model", (value, label, parser) -> parser.parseString(value, label), product::setModel);
@@ -98,27 +106,42 @@ public class CpuAmdScraper implements ProductScraper<ProductCpuAmd> {
 
     @Override
     public String getValueByLabel(Element table, String label) {
-        Elements rows = table.select("tr");
-        for (Element row : rows) {
-            Element th = row.select("th").first();
-            if (th != null && th.text().contains(label)) {
-                return row.select("td").first().text();
+        try {
+            Elements rows = table.select("tr:has(th:contains(" + label + "))");
+
+            if (rows.isEmpty()) {
+                // Handle case where label is not found in any row
+                return "";
             }
+
+            Element row = rows.first();
+            Element valueCell = row.selectFirst("td");
+
+            if (valueCell != null) {
+                return valueCell.text().trim();
+            } else {
+                // Handle case where no <td> cell found after <th> containing label
+                return "";
+            }
+        } catch (Exception e) {
+            // Handle any unexpected exceptions, e.g., logging or returning default value
+            e.printStackTrace(); // Log the exception or handle it according to your needs
+            return "";
         }
-        return "";
     }
 
     @Override
     public Element getSpecsTabPane() {
         try {
-            Document doc = Jsoup.connect(productUrl).get();
+            doc = Jsoup.connect(productUrl).get();
             Element productDetails = doc.getElementById("product-details");
             if (productDetails != null) {
-                for (Element tabPane : productDetails.select("div.tab-pane")) {
-                    if (tabPane.text().contains("Specifications")) {
-                        return tabPane;
-                    }
-                }
+                Element specsTabPane = productDetails.select("div.tab-pane").get(1);
+
+                // Print the HTML content for debugging
+                logger.info("HTML content:\n" + specsTabPane.html());
+
+                return specsTabPane;
             } else {
                 logger.warning("No product details section found.");
             }
@@ -141,5 +164,9 @@ public class CpuAmdScraper implements ProductScraper<ProductCpuAmd> {
     @Override
     public void setProductUrl(String productUrl) {
         this.productUrl = productUrl;
+    }
+
+    private void waitFor(long duration, TimeUnit timeUnit) throws InterruptedException {
+        Thread.sleep(timeUnit.toMillis(duration));
     }
 }

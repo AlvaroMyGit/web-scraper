@@ -1,4 +1,4 @@
-package java2.smalltest;
+package scrapy.newegg;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -100,13 +100,27 @@ public class ProductTest {
 
     // Helper method to get value by label
     private static String getValueByLabel(Element table, String label) {
-        Elements rows = table.select("tr");
-        for (Element row : rows) {
-            Element th = row.select("th").first();
-            if (th != null && th.text().contains(label)) {
-                return row.select("td").first().text();
+        try {
+            Elements rows = table.select("tr:has(th:contains(" + label + "))");
+
+            if (rows.isEmpty()) {
+                // Handle case where label is not found in any row
+                return "";
             }
+
+            Element row = rows.first();
+            Element valueCell = row.selectFirst("td");
+
+            if (valueCell != null) {
+                return valueCell.text().trim();
+            } else {
+                // Handle case where no <td> cell found after <th> containing label
+                return "";
+            }
+        } catch (Exception e) {
+            // Handle any unexpected exceptions, e.g., logging or returning default value
+            e.printStackTrace(); // Log the exception or handle it according to your needs
+            return "";
         }
-        return "";
     }
 }
