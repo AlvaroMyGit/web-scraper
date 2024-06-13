@@ -139,7 +139,7 @@ public class CpuAmdScraper implements ProductScraper<ProductCpuAmd> {
                 Element specsTabPane = productDetails.select("div.tab-pane").get(1);
 
                 // Print the HTML content for debugging
-                logger.info("HTML content:\n" + specsTabPane.html());
+                //logger.info("HTML content:\n" + specsTabPane.html());
 
                 return specsTabPane;
             } else {

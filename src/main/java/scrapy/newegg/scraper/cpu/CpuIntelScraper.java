@@ -50,7 +50,6 @@ public class CpuIntelScraper implements ProductScraper<ProductCpuIntel> {
                     for (Element specsTable : specsTables) {
 
                         waitFor(1, TimeUnit.SECONDS);
-                        //logger.info("SPECS TABLE content:\n" + specsTable.html());
                         logger.info("Starting product details scraping.");
                         parseAndLog(specsTable, product, "Name", (value, label, parser) -> parser.parseString(value, label), product::setName);
                         BigDecimal price = valueParser.parsePrice(doc);
@@ -113,37 +112,35 @@ public class CpuIntelScraper implements ProductScraper<ProductCpuIntel> {
     @Override
     public <T> void parseAndLog(Element specsTable, ProductCpuIntel product, String fieldName, ValueParserFunction<T> parserFunction, Consumer<T> setter) {
         try {
-            T parsedValue = valueParser.apply(specsTable, fieldName, parserFunction);
-            setter.accept(parsedValue);
-            logger.info("Parsed " + fieldName + ": " + parsedValue);
+            String value = getValueByLabel(specsTable, fieldName);
+            logger.info("Extracted value for " + fieldName + ": " + value);
+            if (value != null && !value.isEmpty()) {
+                T parsedValue = valueParser.apply(specsTable, fieldName, parserFunction);
+                setter.accept(parsedValue);
+            } else {
+                logger.warning("No value found for " + fieldName);
+            }
         } catch (Exception e) {
-            logger.warning("Failed to parse " + fieldName + ": " + e.getMessage());
+            logger.log(Level.SEVERE, "Error parsing value for " + fieldName, e);
         }
     }
 
     @Override
-    public String getValueByLabel(Element table, String label) {
-        try {
-            Elements rows = table.select("tr:has(th:contains(" + label + "))");
-
-            if (rows.isEmpty()) {
-                // Handle case where label is not found in any row
-                return "";
-            }
-
-            Element row = rows.first();
-            Element valueCell = row.selectFirst("td");
-
-            if (valueCell != null) {
-                return valueCell.text().trim();
+    public String getValueByLabel(Element specsTable, String label) {
+        Elements rows = specsTable.select("tr:has(th:contains(" + label + "))");
+        if (rows.isEmpty()) {
+            logger.warning("No row found for label: " + label);
+            return null;
+        } else {
+            Elements tds = rows.first().select("td");
+            if (tds.isEmpty()) {
+                logger.warning("No value found for label: " + label);
+                return null;
             } else {
-                // Handle case where no <td> cell found after <th> containing label
-                return "";
+                String value = tds.first().text();
+                logger.info("Value found for label " + label + ": " + value);
+                return value;
             }
-        } catch (Exception e) {
-            // Handle any unexpected exceptions, e.g., logging or returning default value
-            e.printStackTrace(); // Log the exception or handle it according to your needs
-            return "";
         }
     }
 
@@ -156,7 +153,7 @@ public class CpuIntelScraper implements ProductScraper<ProductCpuIntel> {
                 Element specsTabPane = productDetails.select("div.tab-pane").get(1);
 
                 // Print the HTML content for debugging
-                logger.info("HTML content:\n" + specsTabPane.html());
+                //logger.info("HTML content:\n" + specsTabPane.html());
 
                 return specsTabPane;
             } else {
@@ -169,21 +166,27 @@ public class CpuIntelScraper implements ProductScraper<ProductCpuIntel> {
     }
 
     @Override
-    public void saveProduct(ProductCpuIntel product) {
+    public void setProductUrl(String productUrl) {
+        this.productUrl = productUrl;
         try {
-            productCpuIntelRepository.save(product);
-            logger.info("Product saved successfully: " + product);
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error saving product to the database: " + product, e);
+            doc = Jsoup.connect(productUrl).get();
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Error connecting to URL: " + productUrl, e);
         }
     }
 
     @Override
-    public void setProductUrl(String productUrl) {
-        this.productUrl = productUrl;
+    public void saveProduct(ProductCpuIntel product) {
+        productCpuIntelRepository.save(product);
+        logger.info("Product saved: " + product.toString());
     }
 
-    private void waitFor(long duration, TimeUnit timeUnit) throws InterruptedException {
-        Thread.sleep(timeUnit.toMillis(duration));
+    private void waitFor(int time, TimeUnit timeUnit) {
+        try {
+            timeUnit.sleep(time);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 }
+

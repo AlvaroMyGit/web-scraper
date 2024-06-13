@@ -3,7 +3,6 @@ package scrapy.newegg.scraper.cpu;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import scrapy.newegg.factory.scraper.cpu.ProductCpuScraperFactoryProvider;
-import scrapy.newegg.model.cpu.ProductCpu;
 import scrapy.newegg.scraper.ProductScraper;
 import scrapy.newegg.scraper.ProductUrlProcessor;
 import java.util.concurrent.BlockingQueue;
@@ -54,7 +53,7 @@ public class CpuUrlProcessor implements ProductUrlProcessor {
         logger.info("Detected brand: " + brand);
 
         try {
-            createProductFromUrl(productUrl, brand);
+            createScraperFromUrl(productUrl, brand);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error scraping product data from URL: " + productUrl, e);
         }
@@ -70,7 +69,7 @@ public class CpuUrlProcessor implements ProductUrlProcessor {
         }
     }
 
-    public void createProductFromUrl(String productUrl, String brand) {
+    public void createScraperFromUrl(String productUrl, String brand) {
         if ("amd".equalsIgnoreCase(brand)) {
             ProductScraper<?> scraper = productCpuScraperFactoryProvider.getScraper("CPU_AMD");
             if (scraper != null) {

@@ -2,7 +2,9 @@ package scrapy.newegg.factory.scraper.cpu;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import scrapy.newegg.model.ProductCategory;
 import scrapy.newegg.model.cpu.ProductCpu;
+import scrapy.newegg.repository.CategoryRepository;
 import scrapy.newegg.scraper.ProductScraper;
 
 import java.util.HashMap;
@@ -14,6 +16,9 @@ public class ProductCpuScraperFactoryProvider {
 
     private static final Logger logger = Logger.getLogger(ProductCpuScraperFactoryProvider.class.getName());
     private final Map<String, ProductCpuScraperFactory> factoryMap = new HashMap<>();
+
+    @Autowired
+    CategoryRepository categoryRepository;
 
     public ProductCpuScraperFactoryProvider() {
         // Initialize factory mappings here
@@ -33,8 +38,9 @@ public class ProductCpuScraperFactoryProvider {
             logger.warning(errorMessage);
             throw new RuntimeException(errorMessage);
         }
+            ProductCategory productCategory = categoryRepository.findByName("CPU");
 
         // Here you can pass the category object if needed
-        return factory.createProductScraper(null);
+        return factory.createProductScraper(productCategory);
     }
 }

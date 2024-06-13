@@ -277,4 +277,37 @@ public class ProductCpuAmd extends AbstractProduct implements ProductCpu {
     public void setOperatingSystemSupported(String operatingSystemSupported) {
         this.operatingSystemSupported = operatingSystemSupported;
     }
+
+    @Override
+    public String toString() {
+        return "ProductCpuAmd{" +
+                "brand='" + brand + '\'' +
+                ", name='" + name + '\'' +
+                ", price=" + price +
+                ", category=" + category +
+                ", processorsType='" + processorsType + '\'' +
+                ", series='" + series + '\'' +
+                ", model='" + model + '\'' +
+                ", cpuSocketType='" + cpuSocketType + '\'' +
+                ", numberOfCores=" + numberOfCores +
+                ", numberOfThreads=" + numberOfThreads +
+                ", operatingFrequency=" + operatingFrequency +
+                ", maxTurboFrequency=" + maxTurboFrequency +
+                ", l1Cache='" + l1Cache + '\'' +
+                ", l2Cache='" + l2Cache + '\'' +
+                ", l3Cache='" + l3Cache + '\'' +
+                ", manufacturingTech='" + manufacturingTech + '\'' +
+                ", support64Bit='" + support64Bit + '\'' +
+                ", memoryTypes='" + memoryTypes + '\'' +
+                ", memoryChannel=" + memoryChannel +
+                ", isEccMemorySupported='" + isEccMemorySupported + '\'' +
+                ", integratedGraphics='" + integratedGraphics + '\'' +
+                ", graphicsBaseFrequency=" + graphicsBaseFrequency +
+                ", graphicsMaxBaseFrequency=" + graphicsMaxBaseFrequency +
+                ", pciExpressRevision='" + pciExpressRevision + '\'' +
+                ", thermalDesignPower=" + thermalDesignPower +
+                ", coolingDevice='" + coolingDevice + '\'' +
+                ", operatingSystemSupported='" + operatingSystemSupported + '\'' +
+                '}';
+    }
 }

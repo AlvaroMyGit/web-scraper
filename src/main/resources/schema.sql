@@ -106,8 +106,8 @@ CREATE TABLE intel_cpu (
     cooling_device VARCHAR(255),
     compatible_desktop_chipsets VARCHAR(255),
     operating_system_supported VARCHAR(255),
-    advanced_technologies VARCHAR(255),
-    security_and_reliability VARCHAR(255),
+    advanced_technologies TEXT,
+    security_and_reliability TEXT,
     category_id INTEGER NOT NULL,
     CONSTRAINT fk_intel_category
         FOREIGN KEY (category_id)

@@ -397,4 +397,51 @@ public class ProductCpuIntel extends AbstractProduct implements ProductCpu{
     public void setSecurityAndReliability(String securityAndReliability) {
         this.securityAndReliability = securityAndReliability;
     }
+
+    @Override
+    public String toString() {
+        return "ProductCpuIntel{" +
+                "name='" + name + '\'' +
+                ", brand='" + brand + '\'' +
+                ", price=" + price +
+                ", category=" + category +
+                ", processorsType='" + processorsType + '\'' +
+                ", series='" + series + '\'' +
+                ", model='" + model + '\'' +
+                ", cpuSocketType='" + cpuSocketType + '\'' +
+                ", coreName='" + coreName + '\'' +
+                ", numberOfCores=" + numberOfCores +
+                ", numberOfThreads=" + numberOfThreads +
+                ", operatingFrequencyPerformanceCoreBase=" + operatingFrequencyPerformanceCoreBase +
+                ", operatingFrequencyEfficientCoreBase=" + operatingFrequencyEfficientCoreBase +
+                ", maxTurboFrequencyTurboBoostMaxTechnology=" + maxTurboFrequencyTurboBoostMaxTechnology +
+                ", maxTurboFrequencyPCore=" + maxTurboFrequencyPCore +
+                ", maxTurboFrequencyECore=" + maxTurboFrequencyECore +
+                ", l2Cache='" + l2Cache + '\'' +
+                ", l3Cache='" + l3Cache + '\'' +
+                ", manufacturingTech='" + manufacturingTech + '\'' +
+                ", support64Bit='" + support64Bit + '\'' +
+                ", hyperThreadingSupport='" + hyperThreadingSupport + '\'' +
+                ", memoryTypes='" + memoryTypes + '\'' +
+                ", memoryChannel=" + memoryChannel +
+                ", maxMemorySize=" + maxMemorySize +
+                ", eccMemorySupported='" + eccMemorySupported + '\'' +
+                ", maxMemoryBandwidth=" + maxMemoryBandwidth +
+                ", virtualizationTechnologySupport='" + virtualizationTechnologySupport + '\'' +
+                ", integratedGraphics='" + integratedGraphics + '\'' +
+                ", graphicsBaseFrequency=" + graphicsBaseFrequency +
+                ", graphicsMaxDynamicFrequency=" + graphicsMaxDynamicFrequency +
+                ", scalability='" + scalability + '\'' +
+                ", pciExpressRevision='" + pciExpressRevision + '\'' +
+                ", pciExpressConfigurations='" + pciExpressConfigurations + '\'' +
+                ", maxNumberOfPciExpressLanes='" + maxNumberOfPciExpressLanes + '\'' +
+                ", thermalDesignPower=" + thermalDesignPower +
+                ", maxTurboPower=" + maxTurboPower +
+                ", coolingDevice='" + coolingDevice + '\'' +
+                ", compatibleDesktopChipsets='" + compatibleDesktopChipsets + '\'' +
+                ", operatingSystemSupported='" + operatingSystemSupported + '\'' +
+                ", advancedTechnologies='" + advancedTechnologies + '\'' +
+                ", securityAndReliability='" + securityAndReliability + '\'' +
+                '}';
+    }
 }
