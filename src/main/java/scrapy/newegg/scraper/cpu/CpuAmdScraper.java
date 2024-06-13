@@ -1,6 +1,7 @@
 package scrapy.newegg.scraper.cpu;
 
 import org.jsoup.Jsoup;
+import org.jsoup.helper.Consumer;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,11 +16,9 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 @Component
 public class CpuAmdScraper implements ProductScraper<ProductCpuAmd> {
     private static final Logger logger = Logger.getLogger(CpuAmdScraper.class.getName());
-
 
     @Autowired
     private DefaultValueParser valueParser;
@@ -37,35 +36,36 @@ public class CpuAmdScraper implements ProductScraper<ProductCpuAmd> {
                 Element specsTable = getSpecsTable(specsTabPane);
                 if (specsTable != null) {
                     ProductCpuAmd product = new ProductCpuAmd();
-                    product.setBrand("AMD"); // Set brand explicitly for AMD CPUs
-                    product.setName(valueParser.parseString(specsTable, "Name"));
-                    product.setPrice(valueParser.parseBigDecimal(specsTable, "Price"));
-                    product.setProcessorsType(valueParser.parseString(specsTable, "Processors Type"));
-                    product.setSeries(valueParser.parseString(specsTable, "Series"));
-                    product.setModel(valueParser.parseString(specsTable, "Model"));
-                    product.setCpuSocketType(valueParser.parseString(specsTable, "CPU Socket Type"));
-                    product.setNumberOfCores(valueParser.parseInt(specsTable, "# of Cores"));
-                    product.setNumberOfThreads(valueParser.parseInt(specsTable, "# of Threads"));
-                    product.setOperatingFrequency(valueParser.parseDouble(specsTable, "Operating Frequency"));
-                    product.setMaxTurboFrequency(valueParser.parseDouble(specsTable, "Max Turbo Frequency"));
-                    product.setL1Cache(valueParser.parseString(specsTable, "L1 Cache"));
-                    product.setL2Cache(valueParser.parseString(specsTable, "L2 Cache"));
-                    product.setL3Cache(valueParser.parseString(specsTable, "L3 Cache"));
-                    product.setManufacturingTech(valueParser.parseString(specsTable, "Manufacturing Tech"));
-                    product.setSupport64Bit(valueParser.parseString(specsTable, "64-Bit Support"));
-                    product.setMemoryTypes(valueParser.parseString(specsTable, "Memory Types"));
-                    product.setMemoryChannel(valueParser.parseInt(specsTable, "Memory Channel"));
-                    product.setIsEccMemorySupported(valueParser.parseString(specsTable, "ECC Memory"));
-                    product.setIntegratedGraphics(valueParser.parseString(specsTable, "Integrated Graphics"));
-                    product.setGraphicsBaseFrequency(valueParser.parseInt(specsTable, "Graphics Base Frequency"));
-                    product.setGraphicsMaxBaseFrequency(valueParser.parseInt(specsTable, "Graphics Max Dynamic Frequency"));
-                    product.setPciExpressRevision(valueParser.parseString(specsTable, "PCI Express Revision"));
-                    product.setThermalDesignPower(valueParser.parseInt(specsTable, "Thermal Design Power"));
-                    product.setCoolingDevice(valueParser.parseString(specsTable, "Cooling Device"));
-                    product.setOperatingSystemSupported(valueParser.parseString(specsTable, "Operating System Supported"));
+                    product.setBrand("AMD");
+
+                    parseAndLog(specsTable, product, "Name", (value) -> product.setName(value));
+                    parseAndLog(specsTable, product, "Price", (value) -> product.setPrice(valueParser.parseBigDecimal(specsTable, "Price")));
+                    parseAndLog(specsTable, product, "Processors Type", (value) -> product.setProcessorsType(value));
+                    parseAndLog(specsTable, product, "Series", (value) -> product.setSeries(value));
+                    parseAndLog(specsTable, product, "Model", (value) -> product.setModel(value));
+                    parseAndLog(specsTable, product, "CPU Socket Type", (value) -> product.setCpuSocketType(value));
+                    parseAndLog(specsTable, product, "# of Cores", (value) -> product.setNumberOfCores(valueParser.parseInt(specsTable, "# of Cores")));
+                    parseAndLog(specsTable, product, "# of Threads", (value) -> product.setNumberOfThreads(valueParser.parseInt(specsTable, "# of Threads")));
+                    parseAndLog(specsTable, product, "Operating Frequency", (value) -> product.setOperatingFrequency(valueParser.parseDouble(specsTable, "Operating Frequency")));
+                    parseAndLog(specsTable, product, "Max Turbo Frequency", (value) -> product.setMaxTurboFrequency(valueParser.parseDouble(specsTable, "Max Turbo Frequency")));
+                    parseAndLog(specsTable, product, "L1 Cache", (value) -> product.setL1Cache(value));
+                    parseAndLog(specsTable, product, "L2 Cache", (value) -> product.setL2Cache(value));
+                    parseAndLog(specsTable, product, "L3 Cache", (value) -> product.setL3Cache(value));
+                    parseAndLog(specsTable, product, "Manufacturing Tech", (value) -> product.setManufacturingTech(value));
+                    parseAndLog(specsTable, product, "64-Bit Support", (value) -> product.setSupport64Bit(value));
+                    parseAndLog(specsTable, product, "Memory Types", (value) -> product.setMemoryTypes(value));
+                    parseAndLog(specsTable, product, "Memory Channel", (value) -> product.setMemoryChannel(valueParser.parseInt(specsTable, "Memory Channel")));
+                    parseAndLog(specsTable, product, "ECC Memory", (value) -> product.setIsEccMemorySupported(value));
+                    parseAndLog(specsTable, product, "Integrated Graphics", (value) -> product.setIntegratedGraphics(value));
+                    parseAndLog(specsTable, product, "Graphics Base Frequency", (value) -> product.setGraphicsBaseFrequency(valueParser.parseInt(specsTable, "Graphics Base Frequency")));
+                    parseAndLog(specsTable, product, "Graphics Max Dynamic Frequency", (value) -> product.setGraphicsMaxBaseFrequency(valueParser.parseInt(specsTable, "Graphics Max Dynamic Frequency")));
+                    parseAndLog(specsTable, product, "PCI Express Revision", (value) -> product.setPciExpressRevision(value));
+                    parseAndLog(specsTable, product, "Thermal Design Power", (value) -> product.setThermalDesignPower(valueParser.parseInt(specsTable, "Thermal Design Power")));
+                    parseAndLog(specsTable, product, "Cooling Device", (value) -> product.setCoolingDevice(value));
+                    parseAndLog(specsTable, product, "Operating System Supported", (value) -> product.setOperatingSystemSupported(value));
 
                     saveProduct(product);
-                    return ScrapingResult.SUCCESS; // Return success indicator
+                    return ScrapingResult.SUCCESS;
                 } else {
                     logger.warning("No specifications table found.");
                     return ScrapingResult.NO_SPECIFICATIONS_TABLE;
@@ -80,40 +80,40 @@ public class CpuAmdScraper implements ProductScraper<ProductCpuAmd> {
         }
     }
 
+    private void parseAndLog(Element specsTable, ProductCpuAmd product, String fieldName, Consumer<String> setter) {
+        try {
+            String value = valueParser.parseString(specsTable, fieldName);
+            setter.accept(value);
+            logger.info("Parsed " + fieldName + ": " + value);
+        } catch (Exception e) {
+            logger.warning("Failed to parse " + fieldName + ": " + e.getMessage());
+        }
+    }
+
     @Override
     public Element getSpecsTabPane() {
         try {
-            // Send HTTP GET request
             Document doc = Jsoup.connect(productUrl).get();
-
-            // Find the product details section
             Element productDetails = doc.getElementById("product-details");
             if (productDetails != null) {
-                // Find the tab pane containing the specifications
-                Element specsTabPane = productDetails.select("div.tab-pane").get(1); // assuming the second tab-pane is Specs
-                if (specsTabPane != null) {
-                    return specsTabPane;
-                } else {
-                    logger.warning("No specs tab pane found within product details section.");
-                    return null;
+                // Adjusted logic to find the correct tab-pane
+                for (Element tabPane : productDetails.select("div.tab-pane")) {
+                    if (tabPane.text().contains("Specifications")) {
+                        return tabPane;
+                    }
                 }
             } else {
                 logger.warning("No product details section found.");
-                return null;
             }
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Error connecting to product URL: " + productUrl, e);
-            return null;
-        } catch (IndexOutOfBoundsException e) {
-            logger.warning("No specs tab pane found at the expected index.");
-            return null;
         }
+        return null;
     }
 
     @Override
     public Element getSpecsTable(Element specsTabPane) {
         if (specsTabPane != null) {
-            // Find the table containing the specifications within the tab pane
             return specsTabPane.select("table.table-horizontal").first();
         } else {
             logger.warning("Specs tab pane is null.");
@@ -121,10 +121,14 @@ public class CpuAmdScraper implements ProductScraper<ProductCpuAmd> {
         }
     }
 
-
     @Override
     public void saveProduct(ProductCpuAmd product) {
-        productCpuAmdRepository.save(product);
+        try {
+            productCpuAmdRepository.save(product);
+            logger.info("Product saved successfully: " + product);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error saving product to the database: " + product, e);
+        }
     }
 
     @Override

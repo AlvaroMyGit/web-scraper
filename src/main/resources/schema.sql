@@ -132,3 +132,6 @@ CREATE TABLE compatibility (
     category2_id INTEGER REFERENCES category(id),
     compatibility_rule TEXT NOT NULL -- JSON or text describing the compatibility rule
 );
+
+INSERT INTO category (name, description) VALUES ('CPU', 'Central Processing Unit');
+

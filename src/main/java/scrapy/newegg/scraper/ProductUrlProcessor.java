@@ -7,6 +7,6 @@ public interface ProductUrlProcessor {
     void startProcessing();
     void processNextProductUrl();
     String getBrandFromUrl(String productUrl);
-    ProductCpu createProductFromUrl(String productUrl, String brand);
+    void createProductFromUrl(String productUrl, String brand);
 
 }

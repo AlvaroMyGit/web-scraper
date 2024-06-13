@@ -11,8 +11,7 @@ import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-@SpringBootApplication
-@ComponentScan
+@SpringBootApplication(scanBasePackages = "scrapy.newegg")
 public class Main {
     public static void main(String[] args) throws InterruptedException {
         ConfigurableApplicationContext context = SpringApplication.run(Main.class, args);

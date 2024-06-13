@@ -54,10 +54,7 @@ public class CpuUrlProcessor implements ProductUrlProcessor {
         logger.info("Detected brand: " + brand);
 
         try {
-            ProductCpu product = createProductFromUrl(productUrl, brand);
-            if (product != null) {
-                // Handle the scraped product, e.g., save to the database
-            }
+            createProductFromUrl(productUrl, brand);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error scraping product data from URL: " + productUrl, e);
         }
@@ -73,7 +70,7 @@ public class CpuUrlProcessor implements ProductUrlProcessor {
         }
     }
 
-    public ProductCpu createProductFromUrl(String productUrl, String brand) {
+    public void createProductFromUrl(String productUrl, String brand) {
         if ("amd".equalsIgnoreCase(brand)) {
             ProductScraper<?> scraper = productCpuScraperFactoryProvider.getScraper("CPU_AMD");
             if (scraper != null) {
@@ -101,6 +98,5 @@ public class CpuUrlProcessor implements ProductUrlProcessor {
         } else {
             logger.warning("Unknown CPU brand");
         }
-        return null; // Since the scraper handles the product directly
     }
 }
