@@ -177,8 +177,12 @@ public class CpuIntelScraper implements ProductScraper<ProductCpuIntel> {
 
     @Override
     public void saveProduct(ProductCpuIntel product) {
-        productCpuIntelRepository.save(product);
-        logger.info("Product saved: " + product.toString());
+        try {
+            productCpuIntelRepository.save(product);
+            logger.info("Product saved: " + product.toString());
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error saving product to the database: " + product, e);
+        }
     }
 
     private void waitFor(int time, TimeUnit timeUnit) {
